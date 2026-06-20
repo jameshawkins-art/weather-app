@@ -146,3 +146,29 @@ src/feature/weather/types/index.ts:
 * **Type guard** - `isWeatherStackError` is a type guard function that narrows the union type `WeatherStackAPIResponse` to `WeatherStackError` when `success` is `false`. This allows TypeScript to infer the correct type in conditional branches.
 * **Discriminated unions** - `WeatherStackAPIResponse` is a discriminated union of `WeatherStackResponse` and `WeatherStackError`.
 * **Seperation of concerns** - The service layer knows how to call the API, but components only know what data they need. `src/services/weatherService.ts` is an example of a service having seperation of concerns as you can easly see we can created testable service and allows for us to switch to OpenWeatherMap if we wanted to.
+* **Custom hook** - `useWeather` is a custom hook that encapsulates the logic for fetching and managing weather data. It uses `useState`, `useEffect`, and `useCallback` to manage the state of the weather data, loading state, and error state.
+---
+<br><br>
+
+# Core UI Components (Atomic Design)
+
+#### Concepts
+
+* **Atomic Design** - "Atomic Design" is a methodology for creating design systems and component libraries, popularized by Brad Frost. Here are our Weather Apps core components:  
+    * **Card**: A presentational container styled with a glassmorphic look (rounded corners, subtle border, semi-transparent background) that wraps content like a card. It's a presentational component that accepts `children` and `className` props, with a default glassmorphic style that can be customized via the `className` prop.
+    * **Input**: A controlled text input component that accepts a value prop and onChange handler, with built-in support for submission via the Enter key. It also includes client-side debouncing to limit the rate of submission events. We extend `React.InputHTMLAttributes<HTMLInputElement>` so that we can expose HTML properties like placeholder, disabled, aria-label, etc.
+    * **Spinner**: A presentational component that displays a loading spinner (a spinning circle) using CSS animations, with support for a `size` prop to control its dimensions. 
+    * **ErrorMessage**: A presentational component that displays an error message with an optional retry button, using a simple card layout with error-themed styling (red/orange tint, warning icon).
+* **Classname merger utility** - Using a classname merger utility allows for us to combine classnames in a type-safe manner. This only works for **Conditional Classes**, later we may add tailwind-merge to resolve any **Tailwind Class Conflicts**.
+```
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs));
+}
+```
+* **No icon library** - Im a big fan of SVG icons, In previous projects which use a Go webserver to render HTML I have built my own utility around SVG to handle customising stroke/fill colours, stroke-width, etc. I do understand the trad-offs between using libraries like react-icons and which shifts your dependancy to the library which means faster developer velocity, easier to maintain and readable.  However I am still a fan of SVG and just think they are lovely piece of tech to work with.
+
+
+    
