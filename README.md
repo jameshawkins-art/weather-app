@@ -82,3 +82,49 @@ Here are the key concepts and patterns used in this project:
 * **Feature-Based Architecture** - Organizing the codebase by feature modules rather than by type (e.g. putting all components in one folder, all hooks in another, etc.). This makes it easier to understand, maintain, and scale the codebase as it grows.
 * **Single Responsibility Principle** - Each component, hook, and type should have a single responsibility. This makes the codebase easier to understand, maintain, and scale.
 * **Config Object pattern** - Using a config object to store all environment variables and constants. This makes it easier to manage and update the configuration. In this specific case we have frozen the config object to prevent it from being modified at runtime. You can review in `src/config/index.ts`. 
+<br><br>
+
+# Weather Feature
+
+```
+src/feature/weather/types/index.ts:
+   interface WeatherLocation {
+     name: string;
+     country: string;
+     region: string;
+     lat: string;
+     lon: string;
+     localtime: string;
+   }
+   interface WeatherCurrent {
+     temperature: number;
+     weather_descriptions: string[];
+     weather_icons: string[];
+     wind_speed: number;
+     wind_dir: string;
+     humidity: number;
+     feelslike: number;
+     uv_index: number;
+     visibility: number;
+     pressure: number;
+     cloudcover: number;
+     precip: number;
+   }
+   interface WeatherStackResponse {
+     request: { type: string; query: string; language: string; unit: string };
+     location: WeatherLocation;
+     current: WeatherCurrent;
+   }
+   interface WeatherStackError {
+     success: false;
+     error: { code: number; type: string; info: string };
+   }
+   
+   type WeatherStackAPIResponse = WeatherStackResponse | WeatherStackError;
+```
+
+#### Concepts
+
+* **Type guard** - `isWeatherStackError` is a type guard function that narrows the union type `WeatherStackAPIResponse` to `WeatherStackError` when `success` is `false`. This allows TypeScript to infer the correct type in conditional branches.
+* **Discriminated unions** - `WeatherStackAPIResponse` is a discriminated union of `WeatherStackResponse` and `WeatherStackError`.
+* **Seperation of concerns** - The service layer knows how to call the API, but components only know what data they need. `src/services/weatherService.ts` is an example of a service having seperation of concerns as you can easly see we can created testable service and allows for us to switch to OpenWeatherMap if we wanted to.
