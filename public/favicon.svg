@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <!-- Sun gradient: warm amber core to golden edge -->
+    <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </radialGradient>
+    <!-- Cloud gradient: soft blue-gray with depth -->
+    <linearGradient id="cloud" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F1F5F9"/>
+      <stop offset="100%" stop-color="#CBD5E1"/>
+    </linearGradient>
+    <!-- Subtle sun glow -->
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#FDE68A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Sun rays (behind everything) -->
+  <g transform="translate(40,18)">
+    <!-- Outer glow -->
+    <circle r="18" fill="url(#glow)"/>
+    <!-- Ray lines -->
+    <g stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" opacity="0.85">
+      <line y1="-16" y2="-12"/>
+      <line y1="16" y2="12"/>
+      <line x1="-16" x2="-12"/>
+      <line x1="16" x2="12"/>
+      <line x1="-11.3" y1="-11.3" x2="-8.5" y2="-8.5"/>
+      <line x1="11.3" y1="-11.3" x2="8.5" y2="-8.5"/>
+      <line x1="-11.3" y1="11.3" x2="-8.5" y2="8.5"/>
+      <line x1="11.3" y1="11.3" x2="8.5" y2="8.5"/>
+    </g>
+    <!-- Sun disc -->
+    <circle r="9" fill="url(#sun)"/>
+  </g>
+
+  <!-- Cloud body (in front of sun) -->
+  <g>
+    <!-- Cloud shadow for depth -->
+    <ellipse cx="28" cy="46" rx="22" ry="6" fill="#94A3B8" opacity="0.15"/>
+    <!-- Main cloud shape using overlapping circles -->
+    <path d="
+      M14,42
+      a10,10 0 0,1 9.5,-10
+      a8,8 0 0,1 15,0
+      a10,10 0 0,1 9.5,10
+      Z
+    " fill="url(#cloud)" stroke="#94A3B8" stroke-width="0.5"/>
+    <circle cx="22" cy="34" r="9" fill="url(#cloud)" stroke="#94A3B8" stroke-width="0.5"/>
+    <circle cx="34" cy="32" r="11" fill="url(#cloud)" stroke="#94A3B8" stroke-width="0.5"/>
+    <circle cx="42" cy="37" r="7" fill="url(#cloud)" stroke="#94A3B8" stroke-width="0.5"/>
+    <!-- Cloud base to unify the shapes -->
+    <rect x="14" y="37" width="34" height="6" rx="3" fill="url(#cloud)"/>
+  </g>
+</svg>

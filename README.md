@@ -7,6 +7,7 @@ This template provides a minimal setup to get React working in Vite with HMR and
 I only run node locally in my projects, to maintain stricter security measures.  If you dont have node installed you may run the bash script `bash ./setup_node.sh` and this will download a portable Node.js environment with robust security verification. 
 
 > **Note**: This script has only been tested on linux systems
+
 > **Note**: Make sure to `export PATH="$PWD/bin:$PATH"` before executing any node commands in your workspaces shell.
 
 #### Required tools for script integrity and security
@@ -30,3 +31,10 @@ To run this project locally, you will need to install dependencies.
 npm install
 npm run dev
 ```
+
+Then navigate to `http://localhost:5173/` in your browser.
+
+# Notes
+
+- **Why `VITE_` prefix for env vars?** Vite only exposes env vars prefixed with `VITE_` to client code via `import.meta.env`. This prevents accidentally leaking server-side secrets.
+- **Weather stack api limitations:** The default api key will not work, you will need to obtain a free api key from https://weatherstack.com and replace the key in the `.env.development` file.
