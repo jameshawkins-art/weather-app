@@ -1,6 +1,6 @@
-# React + TypeScript + Vite
+# Weather App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[https://weather-app-jh-2026.web.app/](https://weather-app-jh-2026.web.app/)
 
 # Node Requirements
 
@@ -22,6 +22,7 @@ You are advised to change these vairables in the script, depending on your needs
 VERSION="v22.12.0"
 DISTRO="linux-x64"
 ```
+---
 <br><br>
 
 # Development Environment
@@ -34,12 +35,28 @@ npm run dev
 ```
 
 Then navigate to `http://localhost:5173/` in your browser.
-<br><br>
 
-# Notes
+---
+### CI/CD Pipeline
+
+#### 1. `firebase-hosting-pull-request.yml`
+* **Trigger:** `on: pull_request` (when you create or update a Pull Request targeting `main`).
+* **Code State:** The code **has not** been merged yet.
+* **Deploy Target:** Deploys to a **Preview Channel** (a temporary, auto-expiring URL unique to that PR, e.g., `project--pr-1-abcde.web.app`).
+* **Purpose:** It lets you see and test your changes live on a secure URL *before* you merge them into production. The action will automatically post a comment on your PR with the link.
+
+#### 2. `firebase-hosting-merge.yml`
+* **Trigger:** `on: push` to `main` (when you push directly to `main`, or click the "Merge" button on an approved Pull Request).
+* **Code State:** The code is now officially merged into `main`.
+* **Deploy Target:** Deploys to the **Live Channel** (your production URLs: `project.web.app` and `project.firebaseapp.com`).
+* **Purpose:** It publishes the finalized, approved changes to your live site for users.
+---
+
+### Notes
 
 - **Why `VITE_` prefix for env vars?** Vite only exposes env vars prefixed with `VITE_` to client code via `import.meta.env`. This prevents accidentally leaking server-side secrets.
 - **Weather stack api limitations:** The default api key will not work, you will need to obtain a free api key from https://weatherstack.com and replace the key in the `.env.development` file.
+---
 <br><br>
 
 # Project Structure
@@ -82,6 +99,7 @@ Here are the key concepts and patterns used in this project:
 * **Feature-Based Architecture** - Organizing the codebase by feature modules rather than by type (e.g. putting all components in one folder, all hooks in another, etc.). This makes it easier to understand, maintain, and scale the codebase as it grows.
 * **Single Responsibility Principle** - Each component, hook, and type should have a single responsibility. This makes the codebase easier to understand, maintain, and scale.
 * **Config Object pattern** - Using a config object to store all environment variables and constants. This makes it easier to manage and update the configuration. In this specific case we have frozen the config object to prevent it from being modified at runtime. You can review in `src/config/index.ts`. 
+---
 <br><br>
 
 # Weather Feature

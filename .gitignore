@@ -27,3 +27,4 @@ bin
 node-v*
 .env
 todo
+.firebase/
