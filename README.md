@@ -99,6 +99,8 @@ Here are the key concepts and patterns used in this project:
 * **Feature-Based Architecture** - Organizing the codebase by feature modules rather than by type (e.g. putting all components in one folder, all hooks in another, etc.). This makes it easier to understand, maintain, and scale the codebase as it grows.
 * **Single Responsibility Principle** - Each component, hook, and type should have a single responsibility. This makes the codebase easier to understand, maintain, and scale.
 * **Config Object pattern** - Using a config object to store all environment variables and constants. This makes it easier to manage and update the configuration. In this specific case we have frozen the config object to prevent it from being modified at runtime. You can review in `src/config/index.ts`. 
+* **Component composition** - SearchBar uses Input, WeatherCard uses Card and WeatherDetails. This demonstrates composability.
+* **Responsive design with Tailwind** - Using `grid-cols-1 md:grid-cols-3` is a mobile-first approach. Tailwind's breakpoint prefixes (`sm:`, `md:`, `lg:`) are just `@media (min-width: ...)` under the hood.
 ---
 <br><br>
 
