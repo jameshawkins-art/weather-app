@@ -1,6 +1,124 @@
-import type { WeatherStackResponse, WeatherStackError } from '../features/weather/types';
+import type { ExtendedWeatherResponse, WeatherStackError, DailyWeatherData } from '../features/weather/types';
 
-export const mockSuccessResponse: WeatherStackResponse = {
+export const mockForecast: DailyWeatherData[] = [
+  {
+    date: '2026-06-21',
+    dayName: 'Tomorrow',
+    temperature: 20,
+    weather_descriptions: ['Sunny'],
+    weather_icons: ['https://example.com/sunny.png'],
+    wind_speed: 10,
+    wind_dir: 'NE',
+    humidity: 50,
+    feelslike: 20,
+    uv_index: 5,
+    visibility: 10,
+    pressure: 1013,
+  },
+  {
+    date: '2026-06-22',
+    dayName: 'Monday',
+    temperature: 22,
+    weather_descriptions: ['Cloudy'],
+    weather_icons: ['https://example.com/cloudy.png'],
+    wind_speed: 12,
+    wind_dir: 'E',
+    humidity: 55,
+    feelslike: 22,
+    uv_index: 4,
+    visibility: 10,
+    pressure: 1012,
+  },
+  {
+    date: '2026-06-23',
+    dayName: 'Tuesday',
+    temperature: 21,
+    weather_descriptions: ['Rainy'],
+    weather_icons: ['https://example.com/rainy.png'],
+    wind_speed: 15,
+    wind_dir: 'SE',
+    humidity: 70,
+    feelslike: 20,
+    uv_index: 3,
+    visibility: 8,
+    pressure: 1009,
+  },
+];
+
+export const mockHistory: DailyWeatherData[] = [
+  {
+    date: '2026-06-19',
+    dayName: 'Yesterday',
+    temperature: 17,
+    weather_descriptions: ['Sunny'],
+    weather_icons: ['https://example.com/sunny.png'],
+    wind_speed: 8,
+    wind_dir: 'N',
+    humidity: 48,
+    feelslike: 17,
+    uv_index: 4,
+    visibility: 10,
+    pressure: 1015,
+  },
+  {
+    date: '2026-06-18',
+    dayName: '2 Days Ago',
+    temperature: 16,
+    weather_descriptions: ['Windy'],
+    weather_icons: ['https://example.com/windy.png'],
+    wind_speed: 25,
+    wind_dir: 'W',
+    humidity: 60,
+    feelslike: 14,
+    uv_index: 3,
+    visibility: 10,
+    pressure: 1010,
+  },
+  {
+    date: '2026-06-17',
+    dayName: '3 Days Ago',
+    temperature: 15,
+    weather_descriptions: ['Rainy'],
+    weather_icons: ['https://example.com/rainy.png'],
+    wind_speed: 18,
+    wind_dir: 'SW',
+    humidity: 75,
+    feelslike: 13,
+    uv_index: 2,
+    visibility: 8,
+    pressure: 1008,
+  },
+];
+
+export const mockWeatherData: ExtendedWeatherResponse = {
+  request: { type: 'City', query: 'London', language: 'en', unit: 'm' },
+  location: {
+    name: 'London',
+    country: 'United Kingdom',
+    region: 'City of London',
+    lat: '51.517',
+    lon: '-0.106',
+    localtime: '2026-06-20 12:00',
+  },
+  current: {
+    temperature: 18,
+    weather_descriptions: ['Partly cloudy'],
+    weather_icons: ['https://example.com/partly_cloudy.png'],
+    wind_speed: 10,
+    wind_dir: 'SW',
+    humidity: 60,
+    feelslike: 18,
+    uv_index: 4,
+    visibility: 10,
+    pressure: 1014,
+    cloudcover: 40,
+    precip: 0,
+  },
+  forecast: mockForecast,
+  history: mockHistory,
+};
+
+export const mockSuccessResponse: ExtendedWeatherResponse = {
   request: {
     type: 'City',
     query: 'Cape Town, South Africa',
@@ -29,6 +147,8 @@ export const mockSuccessResponse: WeatherStackResponse = {
     cloudcover: 50,
     precip: 0,
   },
+  forecast: [],
+  history: [],
 };
 
 export const mockErrorResponse: WeatherStackError = {

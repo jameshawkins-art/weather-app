@@ -59,4 +59,3 @@ echo "[INFO] Running a simulated auto-renewal test (dry-run)..."
 certbot renew --cert-name "$API_DOMAIN" --dry-run || true
 
 echo "[INFO] SSL fully provisioned!"
-EOF

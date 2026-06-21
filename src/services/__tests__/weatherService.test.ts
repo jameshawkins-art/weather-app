@@ -53,7 +53,11 @@ describe('getWeatherByCity', () => {
 
     const result = await getWeatherByCity('Cape Town');
 
-    expect(result).toEqual(mockSuccessResponse);
+    expect(result).toEqual(expect.objectContaining({
+      ...mockSuccessResponse,
+      forecast: expect.any(Array),
+      history: expect.any(Array),
+    }));
     expect(result.location.name).toBe('Cape Town');
     expect(result.current.temperature).toBe(18);
   });

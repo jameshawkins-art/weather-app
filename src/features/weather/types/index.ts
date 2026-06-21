@@ -40,3 +40,23 @@ export interface WeatherStackError {
 }
 
 export type WeatherStackAPIResponse = WeatherStackResponse | WeatherStackError;
+
+export interface DailyWeatherData {
+  date: string;                  // YYYY-MM-DD format
+  dayName: string;               // e.g. "Monday", "Yesterday", "Tomorrow"
+  temperature: number;
+  weather_descriptions: string[];
+  weather_icons: string[];
+  wind_speed: number;
+  wind_dir: string;
+  humidity: number;
+  feelslike: number;
+  uv_index: number;
+  visibility: number;
+  pressure: number;
+}
+
+export interface ExtendedWeatherResponse extends WeatherStackResponse {
+  forecast: DailyWeatherData[];
+  history: DailyWeatherData[];
+}

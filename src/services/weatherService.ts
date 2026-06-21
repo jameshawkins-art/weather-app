@@ -10,13 +10,97 @@ import { fetchData, AppError } from './api';
 import type {
   WeatherStackAPIResponse,
   WeatherStackError,
-  WeatherStackResponse,
+  ExtendedWeatherResponse,
+  DailyWeatherData,
+  WeatherCurrent,
 } from '../features/weather/types';
 
 export function isWeatherStackError(
   data: WeatherStackAPIResponse,
 ): data is WeatherStackError {
   return 'success' in data && data.success === false;
+}
+
+/**
+ * Generates mock forecast and historical data based on current weather.
+ */
+export function generateExtendedData(
+  current: WeatherCurrent,
+  localtime: string,
+): { forecast: DailyWeatherData[]; history: DailyWeatherData[] } {
+  const parts = localtime.split(' ')[0].split('-');
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+
+  const formatDate = (d: Date): string => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dateDay = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dateDay}`;
+  };
+
+  const getDayName = (d: Date, today: Date): string => {
+    const diff = d.getTime() - today.getTime();
+    const diffDays = Math.round(diff / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Tomorrow';
+    if (diffDays === -1) return 'Yesterday';
+    
+    return d.toLocaleDateString('en-US', { weekday: 'long' });
+  };
+
+  const today = new Date(year, month, day);
+
+  const forecast: DailyWeatherData[] = [];
+  const history: DailyWeatherData[] = [];
+
+  // Generate next 3 days (Forecast)
+  for (let i = 1; i <= 3; i++) {
+    const d = new Date(year, month, day + i);
+    const tempOffset = Math.round(Math.sin(i) * 3); // -3 to +3 variation
+    const humidityOffset = Math.round(Math.cos(i) * 10); // -10 to +10 variation
+    
+    forecast.push({
+      date: formatDate(d),
+      dayName: getDayName(d, today),
+      temperature: Math.max(0, current.temperature + tempOffset),
+      weather_descriptions: current.weather_descriptions,
+      weather_icons: current.weather_icons,
+      wind_speed: Math.max(0, current.wind_speed + tempOffset),
+      wind_dir: current.wind_dir,
+      humidity: Math.min(100, Math.max(0, current.humidity + humidityOffset)),
+      feelslike: Math.max(0, current.feelslike + tempOffset),
+      uv_index: Math.max(1, current.uv_index + Math.round(tempOffset / 2)),
+      visibility: current.visibility,
+      pressure: current.pressure + Math.round(tempOffset),
+    });
+  }
+
+  // Generate past 3 days (History)
+  for (let i = 1; i <= 3; i++) {
+    const d = new Date(year, month, day - i);
+    const tempOffset = Math.round(Math.sin(-i) * 3); // -3 to +3 variation
+    const humidityOffset = Math.round(Math.cos(-i) * 10);
+    
+    history.unshift({
+      date: formatDate(d),
+      dayName: getDayName(d, today),
+      temperature: Math.max(0, current.temperature + tempOffset),
+      weather_descriptions: current.weather_descriptions,
+      weather_icons: current.weather_icons,
+      wind_speed: Math.max(0, current.wind_speed + tempOffset),
+      wind_dir: current.wind_dir,
+      humidity: Math.min(100, Math.max(0, current.humidity + humidityOffset)),
+      feelslike: Math.max(0, current.feelslike + tempOffset),
+      uv_index: Math.max(1, current.uv_index + Math.round(tempOffset / 2)),
+      visibility: current.visibility,
+      pressure: current.pressure + Math.round(tempOffset),
+    });
+  }
+
+  return { forecast, history };
 }
 
 /**
@@ -28,7 +112,7 @@ export function isWeatherStackError(
  */
 export async function getWeatherByCity(
   city: string,
-): Promise<WeatherStackResponse> {
+): Promise<ExtendedWeatherResponse> {
   if (!city) {
     throw new Error('City name cannot be empty.');
   }
@@ -37,8 +121,8 @@ export async function getWeatherByCity(
   const url = isProd
     ? `${config.proxyUrl}/api/weather?city=${encodeURIComponent(city)}`
     : `${WEATHERSTACK_BASE_URL}/current` +
-      `?access_key=${config.weatherstackApiKey}` +
-      `&query=${encodeURIComponent(city)}`;
+    `?access_key=${config.weatherstackApiKey}` +
+    `&query=${encodeURIComponent(city)}`;
 
   const data = await fetchData<WeatherStackAPIResponse>(url);
 
@@ -58,6 +142,11 @@ export async function getWeatherByCity(
     throw new AppError(message, 'API');
   }
 
-  return data;
-}
+  const { forecast, history } = generateExtendedData(data.current, data.location.localtime);
 
+  return {
+    ...data,
+    forecast,
+    history,
+  };
+}
