@@ -7,3 +7,5 @@
 export * from './SearchBar';
 export * from './WeatherCard';
 export * from './WeatherDetails';
+export * from './WeatherTile';
+export * from './ForecastHistorySection';
