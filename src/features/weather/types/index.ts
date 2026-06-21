@@ -26,6 +26,7 @@ export interface WeatherCurrent {
   pressure: number;
   cloudcover: number;
   precip: number;
+  day_title?: string;
 }
 
 export interface WeatherStackResponse {

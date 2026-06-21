@@ -37,6 +37,14 @@ export function WeatherCard({ data }: WeatherCardProps) {
         </div>
 
         <div className="flex flex-col items-center py-6">
+          {current.day_title && (
+            <span
+              className="text-xs font-extrabold text-blue-400 uppercase tracking-widest mb-3 px-3 py-1 bg-blue-500/10 rounded-full border border-blue-500/20 shadow-inner select-none animate-fade-in"
+              data-testid="weather-card-day-title"
+            >
+              {current.day_title}
+            </span>
+          )}
           <div className="flex items-start">
             <span className="text-7xl md:text-8xl font-black text-white tracking-tighter select-none">
               {current.temperature}
