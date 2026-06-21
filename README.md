@@ -171,6 +171,15 @@ export function cn(...inputs: ClassValue[]): string {
 }
 ```
 * **No icon library** - Im a big fan of SVG icons, In previous projects which use a Go webserver to render HTML I have built my own utility around SVG to handle customising stroke/fill colours, stroke-width, etc. I do understand the trad-offs between using libraries like react-icons and which shifts your dependancy to the library which means faster developer velocity, easier to maintain and readable.  However I am still a fan of SVG and just think they are lovely piece of tech to work with.
+---
+<br><br>
 
+# Error Handling
+
+#### Concepts
+
+* **AbortController** - We make use of `AbortController` to enforce request timeouts. The atomic component `Input.tsx` allows `onSubmit` only on keydown `Enter` which means we do not have to worry about **network race conditions**. However if we were to allow search on type we have the infrastructure to prevent a **network race condition**.
+* **Input validation at multiple layers** - Becasue our `SearchBar.tsx` handles `.trim()` and conditions around empty requests, we can then focus on the `useWeather` hook to handle the error handling for the API responses. If a developer later makes a mistake in the code where an empty value gets passed to `fetchWeather` we can rest assured that it will be handled gracefully as `getWeatherByCity` throws an error if the city name is empty. 
+* **Empty states** - Its bad UX practice to show empty states, So a Welcome UI State is displayed while waiting for the user to request weather.
 
     

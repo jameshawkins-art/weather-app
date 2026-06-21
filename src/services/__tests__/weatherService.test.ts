@@ -6,9 +6,27 @@ import type {
   WeatherStackAPIResponse,
 } from '../../features/weather/types';
 
-vi.mock('../api', () => ({
-  fetchData: vi.fn(),
-}));
+vi.mock('../api', () => {
+  class AppError extends Error {
+    public readonly code: string;
+    public readonly statusCode?: number;
+
+    constructor(
+      message: string,
+      code: string,
+      statusCode?: number
+    ) {
+      super(message);
+      this.name = 'AppError';
+      this.code = code;
+      this.statusCode = statusCode;
+    }
+  }
+  return {
+    fetchData: vi.fn(),
+    AppError,
+  };
+});
 
 import { fetchData } from '../api';
 const mockFetchData = vi.mocked(fetchData);
@@ -95,12 +113,62 @@ describe('getWeatherByCity', () => {
     expect(calledUrl).toContain('access_key=');
   });
 
-  it('throws a descriptive error when WeatherStack returns an error body', async () => {
+  it('throws a mapped user-friendly error for WeatherStack error code 101', async () => {
     mockFetchData.mockResolvedValueOnce(errorResponse);
 
     await expect(getWeatherByCity('Cape Town')).rejects.toThrow(
-      'WeatherStack API error 101: You have not supplied a valid API Access Key.',
+      'Invalid API key. Please check your configuration.',
     );
+  });
+
+  it('throws a mapped user-friendly error for WeatherStack error code 615', async () => {
+    mockFetchData.mockResolvedValueOnce({
+      success: false,
+      error: {
+        code: 615,
+        type: 'request_failed',
+        info: 'City not found.',
+      },
+    });
+
+    await expect(getWeatherByCity('UnknownCity')).rejects.toThrow(
+      'City not found. Please check the spelling.',
+    );
+  });
+
+  it('throws a mapped user-friendly error for WeatherStack error code 105', async () => {
+    mockFetchData.mockResolvedValueOnce({
+      success: false,
+      error: {
+        code: 105,
+        type: 'usage_limit_reached',
+        info: 'Usage limit reached.',
+      },
+    });
+
+    await expect(getWeatherByCity('London')).rejects.toThrow(
+      'API usage limit reached. Please try again later.',
+    );
+  });
+
+  it('throws standard error.info for unmapped WeatherStack error codes', async () => {
+    mockFetchData.mockResolvedValueOnce({
+      success: false,
+      error: {
+        code: 999,
+        type: 'unknown_error',
+        info: 'Some obscure error info.',
+      },
+    });
+
+    await expect(getWeatherByCity('London')).rejects.toThrow(
+      'Some obscure error info.',
+    );
+  });
+
+  it('throws validation error for empty or whitespace-only city name', async () => {
+    await expect(getWeatherByCity('')).rejects.toThrow('City name cannot be empty.');
+    await expect(getWeatherByCity('   ')).rejects.toThrow('City name cannot be empty.');
   });
 
   it('propagates network / fetch errors from fetchData', async () => {

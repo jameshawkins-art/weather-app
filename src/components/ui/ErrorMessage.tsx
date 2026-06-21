@@ -1,9 +1,25 @@
 export interface ErrorMessageProps {
-  message: string;
+  message: string | Error | unknown;
   onDismiss?: () => void;
 }
 
 export function ErrorMessage({ message, onDismiss }: ErrorMessageProps) {
+  let displayMessage = 'An unexpected error occurred.';
+
+  if (typeof message === 'string') {
+    displayMessage = message;
+  } else if (message instanceof Error) {
+    displayMessage = message.message;
+  } else if (message && typeof message === 'object') {
+    displayMessage = (message as any).message || (message as any).info || 'An unexpected error occurred.';
+  } else if (message !== null && message !== undefined) {
+    displayMessage = String(message);
+  }
+
+  if (displayMessage.includes('Stack trace:') || displayMessage.includes('at ') || displayMessage.includes('\n')) {
+    displayMessage = displayMessage.split('\n')[0];
+  }
+
   return (
     <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-200 text-sm backdrop-blur-sm transition-all duration-200">
       <div className="text-red-400 mt-0.5 shrink-0">
@@ -22,7 +38,7 @@ export function ErrorMessage({ message, onDismiss }: ErrorMessageProps) {
           />
         </svg>
       </div>
-      <div className="flex-1 leading-normal font-medium">{message}</div>
+      <div className="flex-1 leading-normal font-medium">{displayMessage}</div>
       {onDismiss && (
         <button
           onClick={onDismiss}

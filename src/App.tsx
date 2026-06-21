@@ -3,7 +3,7 @@ import { SearchBar, WeatherCard } from './features/weather/components';
 import { Spinner, ErrorMessage } from './components/ui';
 
 function App() {
-  const { weather, isLoading, error, fetchWeather, clearError } = useWeather();
+  const { weather, isLoading, error, lastSearchedCity, fetchWeather, clearError } = useWeather();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-slate-900 text-white flex flex-col items-center justify-start p-4 md:p-8">
@@ -34,10 +34,26 @@ function App() {
         </header>
 
         <section className="w-full">
-          <SearchBar onSearch={(city) => { void fetchWeather(city); }} isLoading={isLoading} />
+          <SearchBar onSearch={(city) => { fetchWeather(city); }} isLoading={isLoading} />
         </section>
 
         <main className="w-full flex flex-col items-center gap-6">
+          {!lastSearchedCity && !isLoading && !error && (
+            <div className="w-full max-w-md mx-auto bg-slate-900/50 border border-white/10 rounded-3xl p-8 text-center backdrop-blur-xl shadow-2xl animate-fade-in flex flex-col items-center justify-center gap-5 transition-all duration-300 hover:border-blue-500/30">
+              <div className="w-16 h-16 bg-gradient-to-tr from-amber-400 via-orange-400 to-blue-400 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-orange-500/10 animate-pulse">
+                ☀️
+              </div>
+              <div className="flex flex-col gap-2">
+                <h2 className="text-xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-400 bg-clip-text text-transparent">
+                  Ready to check the weather?
+                </h2>
+                <p className="text-sm text-gray-400 leading-relaxed">
+                  Search for any city to get instant local conditions, temperatures, and updates.
+                </p>
+              </div>
+            </div>
+          )}
+
           {isLoading && (
             <div className="flex flex-col items-center gap-3 py-12">
               <Spinner size="lg" />
