@@ -55,4 +55,18 @@ describe('SearchBar component', () => {
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
     expect(onSearch).not.toHaveBeenCalled();
   });
+
+  it('updates focus state styling when input is focused/blurred', () => {
+    render(<SearchBar onSearch={() => { }} isLoading={false} />);
+    const input = screen.getByLabelText('Search for a city') as HTMLInputElement;
+
+    const glowLayer = input.closest('form')?.querySelector('.blur-lg');
+    expect(glowLayer?.className).toContain('opacity-0');
+
+    fireEvent.focus(input);
+    expect(glowLayer?.className).toContain('opacity-90');
+
+    fireEvent.blur(input);
+    expect(glowLayer?.className).toContain('opacity-0');
+  });
 });
