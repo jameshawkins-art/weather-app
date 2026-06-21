@@ -4,7 +4,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useWeather } from '../useWeather';
 import { getWeatherByCity } from '../../../../services/weatherService';
 import { mockSuccessResponse } from '../../../../test/fixtures';
-import type { ExtendedWeatherResponse } from '../../types';
+import type { ExtendedWeatherResponse, DailyWeatherData } from '../../types';
 
 vi.mock('../../../../services/weatherService', () => ({
   getWeatherByCity: vi.fn(),
@@ -22,6 +22,7 @@ describe('useWeather hook', () => {
     expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBeNull();
     expect(result.current.lastSearchedCity).toBeNull();
+    expect(result.current.selectedDay).toBeNull();
   });
 
   it('should handle successful weather fetching', async () => {
@@ -95,11 +96,13 @@ describe('useWeather hook', () => {
 
     const firstFetch = result.current.fetchWeather;
     const firstClear = result.current.clearError;
+    const firstSelect = result.current.selectDay;
 
     rerender();
 
     expect(result.current.fetchWeather).toBe(firstFetch);
     expect(result.current.clearError).toBe(firstClear);
+    expect(result.current.selectDay).toBe(firstSelect);
   });
 
   it('should prevent duplicate concurrent requests for the same city', async () => {
@@ -150,6 +153,69 @@ describe('useWeather hook', () => {
     expect(result.current.weather).toEqual(mockSuccessResponse);
     expect(result.current.lastSearchedCity).toBe('Cape Town');
     expect(result.current.error).toBe('Network error');
+  });
+
+  it('should update selectedDay when selectDay is called', () => {
+    const { result } = renderHook(() => useWeather());
+    
+    const mockDay: DailyWeatherData = {
+      date: '2026-06-22',
+      dayName: 'Tomorrow',
+      temperature: 25,
+      weather_descriptions: ['Sunny'],
+      weather_icons: ['https://example.com/icon.png'],
+      wind_speed: 10,
+      wind_dir: 'ENE',
+      humidity: 50,
+      feelslike: 24,
+      uv_index: 5,
+      visibility: 10,
+      pressure: 1012,
+    };
+
+    act(() => {
+      result.current.selectDay(mockDay);
+    });
+
+    expect(result.current.selectedDay).toEqual(mockDay);
+
+    act(() => {
+      result.current.selectDay(null);
+    });
+
+    expect(result.current.selectedDay).toBeNull();
+  });
+
+  it('should reset selectedDay to null when fetchWeather is called', async () => {
+    vi.mocked(getWeatherByCity).mockResolvedValueOnce(mockSuccessResponse);
+
+    const { result } = renderHook(() => useWeather());
+    
+    const mockDay: DailyWeatherData = {
+      date: '2026-06-22',
+      dayName: 'Tomorrow',
+      temperature: 25,
+      weather_descriptions: ['Sunny'],
+      weather_icons: ['https://example.com/icon.png'],
+      wind_speed: 10,
+      wind_dir: 'ENE',
+      humidity: 50,
+      feelslike: 24,
+      uv_index: 5,
+      visibility: 10,
+      pressure: 1012,
+    };
+
+    act(() => {
+      result.current.selectDay(mockDay);
+    });
+    expect(result.current.selectedDay).toEqual(mockDay);
+
+    await act(async () => {
+      await result.current.fetchWeather('London');
+    });
+
+    expect(result.current.selectedDay).toBeNull();
   });
 });
 
