@@ -1,0 +1,102 @@
+name: Deploy Go Backend Proxy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'proxy/**'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21' # Standard Go version compatible with VPS environment
+
+      - name: Build binary
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o weather-proxy ./proxy/main.go
+
+      - name: Temporarily save binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: weather-proxy-binary
+          path: weather-proxy
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Check out codebase
+        uses: actions/checkout@v4
+
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: weather-proxy-binary
+
+      - name: Transfer binary and configuration files to VPS
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "weather-proxy,proxy/weather-proxy.service,proxy/setup-nginx.sh,proxy/setup-ssl.sh"
+          target: "/tmp/"
+
+      - name: Install and restart service on VPS
+        uses: appleboy/ssh-action@master
+        env:
+          PROD_WEATHERSTACK_API_KEY: ${{ secrets.WEATHERSTACK_API_KEY }}
+          PROD_PORT: 8083
+          PROD_DOMAIN: ${{ secrets.PROXY_DOMAIN }}
+          PROD_EMAIL: ${{ secrets.SSL_EMAIL }}
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          envs: PROD_WEATHERSTACK_API_KEY,PROD_PORT,PROD_DOMAIN,PROD_EMAIL
+          script: |
+            # Move binary to its designated location
+            sudo mv /tmp/weather-proxy /usr/local/bin/weather-proxy
+            sudo chmod +x /usr/local/bin/weather-proxy
+
+            # Create working directory
+            sudo mkdir -p /opt/weather-proxy
+            sudo chown -R gouser:gouser /opt/weather-proxy
+
+            # Create environment directory and write secret key safely
+            sudo mkdir -p /etc/weather-proxy
+            echo "WEATHERSTACK_API_KEY=$PROD_WEATHERSTACK_API_KEY" | sudo tee /etc/weather-proxy/.env > /dev/null
+            echo "PORT=$PROD_PORT" | sudo tee -a /etc/weather-proxy/.env > /dev/null
+            sudo chmod 600 /etc/weather-proxy/.env
+
+            # Move systemd unit file and load it
+            sudo mv /tmp/proxy/weather-proxy.service /etc/systemd/system/weather-proxy.service
+            sudo systemctl daemon-reload
+
+            # Enable and restart service
+            sudo systemctl enable weather-proxy.service
+            sudo systemctl restart weather-proxy.service
+
+            # Give service a moment to start
+            sleep 2
+
+            # Setup Nginx reverse proxy
+            sudo chmod +x /tmp/proxy/setup-nginx.sh
+            sudo PROXY_DOMAIN=$PROD_DOMAIN bash /tmp/proxy/setup-nginx.sh
+
+            # Setup SSL layer
+            sudo chmod +x /tmp/proxy/setup-ssl.sh
+            sudo PROXY_DOMAIN=$PROD_DOMAIN SSL_EMAIL=$PROD_EMAIL bash /tmp/proxy/setup-ssl.sh

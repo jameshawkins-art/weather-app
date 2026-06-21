@@ -12,12 +12,15 @@ import (
 func main() {
 	apiKey := os.Getenv("WEATHERSTACK_API_KEY")
 	if apiKey == "" {
-		log.Fatal("WEATHERSTACK_API_KEY environment variable is required")
+		apiKey = os.Getenv("VITE_WEATHERSTACK_API_KEY")
+	}
+	if apiKey == "" {
+		log.Fatal("WEATHERSTACK_API_KEY or VITE_WEATHERSTACK_API_KEY environment variable is required")
 	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "8083"
 	}
 
 	http.HandleFunc("/api/weather", func(w http.ResponseWriter, r *http.Request) {
@@ -85,7 +88,7 @@ func main() {
 	})
 
 	log.Printf("Proxy server listening on port %s", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
+	if err := http.ListenAndServe("127.0.0.1:"+port, nil); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }

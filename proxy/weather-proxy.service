@@ -1,0 +1,25 @@
+[Unit]
+Description=Weather App Go Proxy Service
+After=network.target
+
+[Service]
+Type=simple
+User=gouser
+Group=gouser
+
+# Environment Configuration: Load production variables
+EnvironmentFile=/etc/weather-proxy/.env
+
+# Paths
+WorkingDirectory=/opt/weather-proxy
+ExecStart=/usr/local/bin/weather-proxy
+
+# Restart Logic: Recover instantly from crashes
+Restart=always
+RestartSec=5s
+
+# Logging
+SyslogIdentifier=weather-proxy
+
+[Install]
+WantedBy=multi-user.target
