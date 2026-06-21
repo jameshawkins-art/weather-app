@@ -32,6 +32,7 @@ jobs:
         run: npm run build
         env:
           VITE_WEATHERSTACK_API_KEY: ${{ secrets.VITE_WEATHERSTACK_API_KEY }}
+          VITE_PROXY_URL: ${{ secrets.VITE_PROXY_URL }}
 
       - name: Deploy to Firebase Hosting (Preview Channel)
         uses: FirebaseExtended/action-hosting-deploy@v0

@@ -33,10 +33,12 @@ export async function getWeatherByCity(
     throw new Error('City name cannot be empty.');
   }
 
-  const url =
-    `${WEATHERSTACK_BASE_URL}/current` +
-    `?access_key=${config.weatherstackApiKey}` +
-    `&query=${encodeURIComponent(city)}`;
+  const isProd = import.meta.env.PROD;
+  const url = isProd
+    ? `${config.proxyUrl}/api/weather?city=${encodeURIComponent(city)}`
+    : `${WEATHERSTACK_BASE_URL}/current` +
+      `?access_key=${config.weatherstackApiKey}` +
+      `&query=${encodeURIComponent(city)}`;
 
   const data = await fetchData<WeatherStackAPIResponse>(url);
 
