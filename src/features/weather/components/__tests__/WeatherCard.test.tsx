@@ -38,4 +38,21 @@ describe('WeatherCard component', () => {
     expect(screen.getByText('Pressure')).toBeDefined();
     expect(screen.getByText('1015')).toBeDefined();
   });
+
+  it('renders day title when present', () => {
+    const mockWithDayTitle = {
+      ...mockSuccessResponse,
+      current: {
+        ...mockSuccessResponse.current,
+        day_title: 'Tomorrow',
+      },
+    };
+    render(<WeatherCard data={mockWithDayTitle} />);
+    expect(screen.getByText('Tomorrow')).toBeDefined();
+  });
+
+  it('does not render day title tag when day_title is absent', () => {
+    render(<WeatherCard data={mockSuccessResponse} />);
+    expect(screen.queryByTestId('weather-card-day-title')).toBeNull();
+  });
 });

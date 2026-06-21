@@ -14,24 +14,33 @@ function App() {
     clearError,
   } = useWeather();
 
-  const displayWeather = weather && selectedDay
-    ? {
-        ...weather,
-        current: {
-          ...weather.current,
-          temperature: selectedDay.temperature,
-          weather_descriptions: selectedDay.weather_descriptions,
-          weather_icons: selectedDay.weather_icons,
-          feelslike: selectedDay.feelslike,
-          humidity: selectedDay.humidity,
-          wind_speed: selectedDay.wind_speed,
-          wind_dir: selectedDay.wind_dir,
-          uv_index: selectedDay.uv_index,
-          visibility: selectedDay.visibility,
-          pressure: selectedDay.pressure,
-        },
-      }
-    : weather;
+  const displayWeather = weather
+    ? (selectedDay
+        ? {
+            ...weather,
+            current: {
+              ...weather.current,
+              temperature: selectedDay.temperature,
+              weather_descriptions: selectedDay.weather_descriptions,
+              weather_icons: selectedDay.weather_icons,
+              feelslike: selectedDay.feelslike,
+              humidity: selectedDay.humidity,
+              wind_speed: selectedDay.wind_speed,
+              wind_dir: selectedDay.wind_dir,
+              uv_index: selectedDay.uv_index,
+              visibility: selectedDay.visibility,
+              pressure: selectedDay.pressure,
+              day_title: selectedDay.dayName,
+            },
+          }
+        : {
+            ...weather,
+            current: {
+              ...weather.current,
+              day_title: 'Today',
+            },
+          })
+    : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-slate-900 text-white flex flex-col items-center justify-start p-4 md:p-8">

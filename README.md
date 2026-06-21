@@ -207,7 +207,9 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
 
 # Proxy
 
-* **Go Webserver** -  I have created a lightweight Go backend webserver located in './proxy' as you can see Go is perfect for this simple proxy server.  I have also created SSL certificates so that the Free Tier Weatherstack API can be used with HTTPS on our production Firbase URL. We also handle our incoming connections with nginx and reverse proxy to the proxy server before handing it off to Weatherstack API.
+* **Go Webserver** -  I have created a lightweight Go backend webserver located in the [proxy](./proxy) directory. Go is perfect for this simple proxy server. I have also created SSL certificates so that the Free Tier Weatherstack API can be used with HTTPS on our production Firebase URL. We also handle our incoming connections with nginx and reverse proxy to the proxy server before handing it off to Weatherstack API.
+
+  For more detailed instructions, configuration variables, and VPS deployment guidelines, you can read further in the [Go Proxy README](./proxy/README.md).
 ---
 <br><br>
 
@@ -216,6 +218,7 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
 * **Free Tier Issues** - The free tier for Weatherstack does not support forecast or historical data. So I have opted to mock out the forecast and historical data in the service layer. We offset the temperature by +/- 3 and the humidity by +/- 10. This is not a production-ready solution as it is not scalable and can lead to incorrect weather data being displayed. In a production environment we would use the paid tier for Weatherstack API, but the Interview Assessment specifically said use the free tier. I was also considering using a different API but did not want to stray from the assessment's guidelines.
 * **Unidirectional Data Flow** - State originates in `useWeather` hook, flows down to `ForecastHistorySection` and `WeatherCard`, and callbacks (`onSelectDay`) flow back up to modify the state.
 * **Open-Closed Principle** - We kept the `WeatherCard` component completely closed to modifications. Instead of adding conditional logic or creating a separate component, we used an Adapter Pattern in `App.tsx` to shape selected forecast/history days into the format `WeatherCard` already expects. Likewise, we created the `ForecastHistorySection` to extend the application's features without modifying the existing detail views.
+* **Interactive Day Title (UX Enhancement)** - To improve visual clarity when shifting views, we implemented a new data point called `day_title` which dynamically updates the title above the temperature in `WeatherCard`. It defaults to "Today" for current conditions, and updates to the selected day's label (e.g., "Monday", "Yesterday") when clicking grid tiles. This is mapped via our parent adapter in `App.tsx`, preserving type-safety and following modular software design principles.
 
 
     
