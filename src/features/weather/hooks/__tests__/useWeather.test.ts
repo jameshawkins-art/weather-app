@@ -4,7 +4,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useWeather } from '../useWeather';
 import { getWeatherByCity } from '../../../../services/weatherService';
 import { mockSuccessResponse } from '../../../../test/fixtures';
-import type { WeatherStackResponse } from '../../types';
+import type { ExtendedWeatherResponse } from '../../types';
 
 vi.mock('../../../../services/weatherService', () => ({
   getWeatherByCity: vi.fn(),
@@ -103,8 +103,8 @@ describe('useWeather hook', () => {
   });
 
   it('should prevent duplicate concurrent requests for the same city', async () => {
-    let resolvePromise: (value: WeatherStackResponse) => void = () => { };
-    const delayPromise = new Promise<WeatherStackResponse>((resolve) => {
+    let resolvePromise: (value: ExtendedWeatherResponse) => void = () => { };
+    const delayPromise = new Promise<ExtendedWeatherResponse>((resolve) => {
       resolvePromise = resolve;
     });
     vi.mocked(getWeatherByCity).mockReturnValue(delayPromise);

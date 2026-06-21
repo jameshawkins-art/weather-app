@@ -1,6 +1,6 @@
-import type { WeatherStackResponse, WeatherStackError } from '../features/weather/types';
+import type { ExtendedWeatherResponse, WeatherStackError } from '../features/weather/types';
 
-export const mockSuccessResponse: WeatherStackResponse = {
+export const mockSuccessResponse: ExtendedWeatherResponse = {
   request: {
     type: 'City',
     query: 'Cape Town, South Africa',
@@ -29,6 +29,8 @@ export const mockSuccessResponse: WeatherStackResponse = {
     cloudcover: 50,
     precip: 0,
   },
+  forecast: [],
+  history: [],
 };
 
 export const mockErrorResponse: WeatherStackError = {
