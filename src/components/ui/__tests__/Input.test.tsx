@@ -24,19 +24,19 @@ describe('Input component', () => {
     expect(onSubmit).toHaveBeenCalledWith('Paris');
   });
 
-  it('does not call onSubmit when input is empty or only whitespace', () => {
+  it('calls onSubmit with raw value when Enter is pressed, including empty or whitespace-only values', () => {
     const onSubmit = vi.fn();
     render(<Input onSubmit={onSubmit} placeholder="Search..." />);
     const inputElement = screen.getByPlaceholderText('Search...') as HTMLInputElement;
 
     // Default empty
     fireEvent.keyDown(inputElement, { key: 'Enter', code: 'Enter' });
-    expect(onSubmit).not.toHaveBeenCalled();
+    expect(onSubmit).toHaveBeenCalledWith('');
 
     // Whitespace only
     fireEvent.change(inputElement, { target: { value: '   ' } });
     fireEvent.keyDown(inputElement, { key: 'Enter', code: 'Enter' });
-    expect(onSubmit).not.toHaveBeenCalled();
+    expect(onSubmit).toHaveBeenCalledWith('   ');
   });
 
   it('applies custom className', () => {

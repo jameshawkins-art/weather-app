@@ -123,9 +123,18 @@ describe('getWeatherByCity', () => {
     );
   });
 
-  it('throws validation error for empty or whitespace-only city name', async () => {
+  it('throws validation error for empty city name', async () => {
     await expect(getWeatherByCity('')).rejects.toThrow('City name cannot be empty.');
-    await expect(getWeatherByCity('   ')).rejects.toThrow('City name cannot be empty.');
+  });
+
+  it('does not validate/trim whitespace-only city names at the service layer', async () => {
+    mockFetchData.mockResolvedValueOnce(mockSuccessResponse);
+
+    await getWeatherByCity('   ');
+
+    expect(mockFetchData).toHaveBeenCalledOnce();
+    const calledUrl = mockFetchData.mock.calls[0][0];
+    expect(calledUrl).toContain('query=%20%20%20');
   });
 
   it('propagates network / fetch errors from fetchData', async () => {
