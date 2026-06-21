@@ -14,12 +14,22 @@ export function SearchBar({ onSearch, isLoading }: SearchBarProps) {
   };
 
   return (
-    <div className="w-full">
+    <form
+      role="search"
+      onSubmit={(e) => e.preventDefault()}
+      className="w-full"
+    >
+      <label htmlFor="city-search-input" className="sr-only">
+        Search for a city
+      </label>
       <Input
+        id="city-search-input"
         placeholder="Search for a city..."
         onSubmit={handleSubmit}
         disabled={isLoading}
+        aria-label="Search for a city"
+        aria-describedby="search-helper-text"
       />
-    </div>
+    </form>
   );
 }

@@ -181,5 +181,17 @@ export function cn(...inputs: ClassValue[]): string {
 * **AbortController** - We make use of `AbortController` to enforce request timeouts. The atomic component `Input.tsx` allows `onSubmit` only on keydown `Enter` which means we do not have to worry about **network race conditions**. However if we were to allow search on type we have the infrastructure to prevent a **network race condition**.
 * **Input validation at multiple layers** - Becasue our `SearchBar.tsx` handles `.trim()` and conditions around empty requests, we can then focus on the `useWeather` hook to handle the error handling for the API responses. If a developer later makes a mistake in the code where an empty value gets passed to `fetchWeather` we can rest assured that it will be handled gracefully as `getWeatherByCity` throws an error if the city name is empty. 
 * **Empty states** - Its bad UX practice to show empty states, So a Welcome UI State is displayed while waiting for the user to request weather.
+---
+<br><br>
+
+# Accessibility
+
+#### Concepts
+
+* **ARIA live region** - We add `aria-live="polite"` to the weather results container to announce updates to screen readers. We use `tabIndex={-1}` on the `<main>` element to support the "Skip to content" link behavior.
+* **sr-only pattern** - We use `sr-only` class to hide content visually but keep it in the accessibility tree for screen readers. 
+* **Roles** - We assign `role="search"`, `role="main"` `role="alert"` to the `SearchBar`, `main` and `ErrorMessage` components respectively to provide additional context for screen readers.
+* **Busy** - We add `aria-busy={isLoading}` to the `<section>` element that will display the `WeatherCard` this is wrapped in a condition to only show this section when `isLoading` is `false` so this will assit the reader to know that the App is no longer busy after the result is displayed.
+
 
     

@@ -21,7 +21,10 @@ export function ErrorMessage({ message, onDismiss }: ErrorMessageProps) {
   }
 
   return (
-    <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-200 text-sm backdrop-blur-sm transition-all duration-200">
+    <div
+      role="alert"
+      className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-200 text-sm backdrop-blur-sm transition-all duration-200"
+    >
       <div className="text-red-400 mt-0.5 shrink-0">
         <svg
           className="w-5 h-5"
@@ -42,7 +45,7 @@ export function ErrorMessage({ message, onDismiss }: ErrorMessageProps) {
       {onDismiss && (
         <button
           onClick={onDismiss}
-          className="text-red-400 hover:text-red-200 transition-colors duration-150 p-0.5 rounded-lg hover:bg-white/5 shrink-0 cursor-pointer"
+          className="text-red-400 hover:text-red-200 focus:outline-none focus:ring-2 focus:ring-red-400/50 transition-colors duration-150 p-0.5 rounded-lg hover:bg-white/5 shrink-0 cursor-pointer"
           aria-label="Dismiss error"
         >
           <svg
