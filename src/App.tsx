@@ -1,9 +1,37 @@
 import { useWeather } from './features/weather';
-import { SearchBar, WeatherCard } from './features/weather/components';
+import { SearchBar, WeatherCard, ForecastHistorySection } from './features/weather/components';
 import { Spinner, ErrorMessage } from './components/ui';
 
 function App() {
-  const { weather, isLoading, error, lastSearchedCity, fetchWeather, clearError } = useWeather();
+  const {
+    weather,
+    isLoading,
+    error,
+    lastSearchedCity,
+    selectedDay,
+    fetchWeather,
+    selectDay,
+    clearError,
+  } = useWeather();
+
+  const displayWeather = weather && selectedDay
+    ? {
+        ...weather,
+        current: {
+          ...weather.current,
+          temperature: selectedDay.temperature,
+          weather_descriptions: selectedDay.weather_descriptions,
+          weather_icons: selectedDay.weather_icons,
+          feelslike: selectedDay.feelslike,
+          humidity: selectedDay.humidity,
+          wind_speed: selectedDay.wind_speed,
+          wind_dir: selectedDay.wind_dir,
+          uv_index: selectedDay.uv_index,
+          visibility: selectedDay.visibility,
+          pressure: selectedDay.pressure,
+        },
+      }
+    : weather;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-slate-900 text-white flex flex-col items-center justify-start p-4 md:p-8">
@@ -89,13 +117,23 @@ function App() {
             </section>
           )}
 
-          {weather && !isLoading && !error && (
+          {weather && displayWeather && !isLoading && !error && (
             <section
               aria-label="Weather results"
-              className="w-full animate-fade-in"
+              className="w-full animate-fade-in flex flex-col gap-6"
               aria-busy={isLoading}
             >
-              <WeatherCard data={weather} />
+              <div className="sr-only" aria-live="assertive" aria-atomic="true">
+                {selectedDay
+                  ? `Showing weather details for ${selectedDay.dayName}, temperature ${Math.round(selectedDay.temperature)}°C, ${selectedDay.weather_descriptions?.[0] || ''}`
+                  : `Showing current weather details, temperature ${Math.round(weather.current.temperature)}°C, ${weather.current.weather_descriptions?.[0] || ''}`}
+              </div>
+              <WeatherCard data={displayWeather} />
+              <ForecastHistorySection
+                weather={weather}
+                selectedDay={selectedDay}
+                onSelectDay={selectDay}
+              />
             </section>
           )}
         </div>
