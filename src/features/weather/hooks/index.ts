@@ -4,3 +4,5 @@
  * Encapsulates data-fetching, state management, and side-effects
  * related to weather data.
  */
+
+export * from './useWeather';

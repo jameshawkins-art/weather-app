@@ -1,6 +1,6 @@
-# React + TypeScript + Vite
+# Weather App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[https://weather-app-jh-2026.web.app/](https://weather-app-jh-2026.web.app/)
 
 # Node Requirements
 
@@ -22,6 +22,7 @@ You are advised to change these vairables in the script, depending on your needs
 VERSION="v22.12.0"
 DISTRO="linux-x64"
 ```
+---
 <br><br>
 
 # Development Environment
@@ -34,12 +35,28 @@ npm run dev
 ```
 
 Then navigate to `http://localhost:5173/` in your browser.
-<br><br>
 
-# Notes
+---
+### CI/CD Pipeline
+
+#### 1. `firebase-hosting-pull-request.yml`
+* **Trigger:** `on: pull_request` (when you create or update a Pull Request targeting `main`).
+* **Code State:** The code **has not** been merged yet.
+* **Deploy Target:** Deploys to a **Preview Channel** (a temporary, auto-expiring URL unique to that PR, e.g., `project--pr-1-abcde.web.app`).
+* **Purpose:** It lets you see and test your changes live on a secure URL *before* you merge them into production. The action will automatically post a comment on your PR with the link.
+
+#### 2. `firebase-hosting-merge.yml`
+* **Trigger:** `on: push` to `main` (when you push directly to `main`, or click the "Merge" button on an approved Pull Request).
+* **Code State:** The code is now officially merged into `main`.
+* **Deploy Target:** Deploys to the **Live Channel** (your production URLs: `project.web.app` and `project.firebaseapp.com`).
+* **Purpose:** It publishes the finalized, approved changes to your live site for users.
+---
+
+### Notes
 
 - **Why `VITE_` prefix for env vars?** Vite only exposes env vars prefixed with `VITE_` to client code via `import.meta.env`. This prevents accidentally leaking server-side secrets.
 - **Weather stack api limitations:** The default api key will not work, you will need to obtain a free api key from https://weatherstack.com and replace the key in the `.env.development` file.
+---
 <br><br>
 
 # Project Structure
@@ -82,3 +99,107 @@ Here are the key concepts and patterns used in this project:
 * **Feature-Based Architecture** - Organizing the codebase by feature modules rather than by type (e.g. putting all components in one folder, all hooks in another, etc.). This makes it easier to understand, maintain, and scale the codebase as it grows.
 * **Single Responsibility Principle** - Each component, hook, and type should have a single responsibility. This makes the codebase easier to understand, maintain, and scale.
 * **Config Object pattern** - Using a config object to store all environment variables and constants. This makes it easier to manage and update the configuration. In this specific case we have frozen the config object to prevent it from being modified at runtime. You can review in `src/config/index.ts`. 
+* **Component composition** - SearchBar uses Input, WeatherCard uses Card and WeatherDetails. This demonstrates composability.
+* **Responsive design with Tailwind** - Using `grid-cols-1 md:grid-cols-3` is a mobile-first approach. Tailwind's breakpoint prefixes (`sm:`, `md:`, `lg:`) are just `@media (min-width: ...)` under the hood.
+---
+<br><br>
+
+# Weather Feature
+
+```
+src/feature/weather/types/index.ts:
+   interface WeatherLocation {
+     name: string;
+     country: string;
+     region: string;
+     lat: string;
+     lon: string;
+     localtime: string;
+   }
+   interface WeatherCurrent {
+     temperature: number;
+     weather_descriptions: string[];
+     weather_icons: string[];
+     wind_speed: number;
+     wind_dir: string;
+     humidity: number;
+     feelslike: number;
+     uv_index: number;
+     visibility: number;
+     pressure: number;
+     cloudcover: number;
+     precip: number;
+   }
+   interface WeatherStackResponse {
+     request: { type: string; query: string; language: string; unit: string };
+     location: WeatherLocation;
+     current: WeatherCurrent;
+   }
+   interface WeatherStackError {
+     success: false;
+     error: { code: number; type: string; info: string };
+   }
+   
+   type WeatherStackAPIResponse = WeatherStackResponse | WeatherStackError;
+```
+
+#### Concepts
+
+* **Type guard** - `isWeatherStackError` is a type guard function that narrows the union type `WeatherStackAPIResponse` to `WeatherStackError` when `success` is `false`. This allows TypeScript to infer the correct type in conditional branches.
+* **Discriminated unions** - `WeatherStackAPIResponse` is a discriminated union of `WeatherStackResponse` and `WeatherStackError`.
+* **Seperation of concerns** - The service layer knows how to call the API, but components only know what data they need. `src/services/weatherService.ts` is an example of a service having seperation of concerns as you can easly see we can created testable service and allows for us to switch to OpenWeatherMap if we wanted to.
+* **Custom hook** - `useWeather` is a custom hook that encapsulates the logic for fetching and managing weather data. It uses `useState`, `useEffect`, and `useCallback` to manage the state of the weather data, loading state, and error state.
+---
+<br><br>
+
+# Core UI Components (Atomic Design)
+
+#### Concepts
+
+* **Atomic Design** - "Atomic Design" is a methodology for creating design systems and component libraries, popularized by Brad Frost. Here are our Weather Apps core components:  
+    * **Card**: A presentational container styled with a glassmorphic look (rounded corners, subtle border, semi-transparent background) that wraps content like a card. It's a presentational component that accepts `children` and `className` props, with a default glassmorphic style that can be customized via the `className` prop.
+    * **Input**: A controlled text input component that accepts a value prop and onChange handler, with built-in support for submission via the Enter key. It also includes client-side debouncing to limit the rate of submission events. We extend `React.InputHTMLAttributes<HTMLInputElement>` so that we can expose HTML properties like placeholder, disabled, aria-label, etc.
+    * **Spinner**: A presentational component that displays a loading spinner (a spinning circle) using CSS animations, with support for a `size` prop to control its dimensions. 
+    * **ErrorMessage**: A presentational component that displays an error message with an optional retry button, using a simple card layout with error-themed styling (red/orange tint, warning icon).
+* **Classname merger utility** - Using a classname merger utility allows for us to combine classnames in a type-safe manner. This only works for **Conditional Classes**, later we may add tailwind-merge to resolve any **Tailwind Class Conflicts**.
+```
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs));
+}
+```
+* **No icon library** - Im a big fan of SVG icons, In previous projects which use a Go webserver to render HTML I have built my own utility around SVG to handle customising stroke/fill colours, stroke-width, etc. I do understand the trad-offs between using libraries like react-icons and which shifts your dependancy to the library which means faster developer velocity, easier to maintain and readable.  However I am still a fan of SVG and just think they are lovely piece of tech to work with.
+---
+<br><br>
+
+# Error Handling
+
+#### Concepts
+
+* **AbortController** - We make use of `AbortController` to enforce request timeouts. The atomic component `Input.tsx` allows `onSubmit` only on keydown `Enter` which means we do not have to worry about **network race conditions**. However if we were to allow search on type we have the infrastructure to prevent a **network race condition**.
+* **Input validation at multiple layers** - Becasue our `SearchBar.tsx` handles `.trim()` and conditions around empty requests, we can then focus on the `useWeather` hook to handle the error handling for the API responses. If a developer later makes a mistake in the code where an empty value gets passed to `fetchWeather` we can rest assured that it will be handled gracefully as `getWeatherByCity` throws an error if the city name is empty. 
+* **Empty states** - Its bad UX practice to show empty states, So a Welcome UI State is displayed while waiting for the user to request weather.
+---
+<br><br>
+
+# Accessibility
+
+#### Concepts
+
+* **ARIA live region** - We add `aria-live="polite"` to the weather results container to announce updates to screen readers. We use `tabIndex={-1}` on the `<main>` element to support the "Skip to content" link behavior.
+* **sr-only pattern** - We use `sr-only` class to hide content visually but keep it in the accessibility tree for screen readers. 
+* **Roles** - We assign `role="search"`, `role="main"` `role="alert"` to the `SearchBar`, `main` and `ErrorMessage` components respectively to provide additional context for screen readers.
+* **Busy** - We add `aria-busy={isLoading}` to the `<section>` element that will display the `WeatherCard` this is wrapped in a condition to only show this section when `isLoading` is `false` so this will assit the reader to know that the App is no longer busy after the result is displayed.
+---
+<br><br>
+
+# Testing
+
+#### Concepts
+* **JSDom** - configured `vite.config.ts` to use JSDom and created `setup.ts` to register it globally. By importing it globally once in `setup.ts`, these custom matchers are injected into the global `expect` namespace so they are available in every test file without having to import it at the top of every single file.
+* **Ceentered Mock Fixtures** - moved the mocks being used in `weatherService.test.ts` and `useWeather.test.ts` to `fixtures.ts` as they were repeated. Centralized mock data prevents duplication and makes tests maintainable. When the API response shape changes, update one fixture.
+
+
+    
