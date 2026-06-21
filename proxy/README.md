@@ -33,7 +33,7 @@ Add the following repository secrets to your GitHub repository under **Settings 
 *   `HOST`: The IP address or hostname of your VPS.
 *   `USERNAME`: The SSH user to log in to the VPS (e.g., `root` or a user with passwordless `sudo` privileges).
 *   `SSH_KEY`: Your private SSH key matching the public key on the VPS.
-*   `SSH_PORT`: The SSH port of your VPS (defaults to `22` if not specified).
+*   `SSH_PORT`: The SSH port of your VPS.
 *   `WEATHERSTACK_API_KEY`: Your WeatherStack API Access Key.
 *   `PROXY_DOMAIN`: The domain/subdomain pointed to your VPS IP address (e.g., `weather-api.yourdomain.com`).
 *   `SSL_EMAIL`: The email address to register with Let's Encrypt for certificate expiry notices.

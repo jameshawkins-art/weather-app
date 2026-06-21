@@ -37,8 +37,8 @@ export async function getWeatherByCity(
   const url = isProd
     ? `${config.proxyUrl}/api/weather?city=${encodeURIComponent(city)}`
     : `${WEATHERSTACK_BASE_URL}/current` +
-      `?access_key=${config.weatherstackApiKey}` +
-      `&query=${encodeURIComponent(city)}`;
+    `?access_key=${config.weatherstackApiKey}` +
+    `&query=${encodeURIComponent(city)}`;
 
   const data = await fetchData<WeatherStackAPIResponse>(url);
 

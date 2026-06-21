@@ -2,6 +2,11 @@
 
 [https://weather-app-jh-2026.web.app/](https://weather-app-jh-2026.web.app/)
 
+![Weather App Demonstration](weather_demo.webp)
+
+---
+<br><br>
+
 # Node Requirements
 
 I only run node locally in my projects, to maintain stricter security measures.  If you dont have node installed you may run the bash script `bash ./setup_node.sh` and this will download a portable Node.js environment with robust security verification. 
@@ -200,6 +205,12 @@ export function cn(...inputs: ClassValue[]): string {
 #### Concepts
 * **JSDom** - configured `vite.config.ts` to use JSDom and created `setup.ts` to register it globally. By importing it globally once in `setup.ts`, these custom matchers are injected into the global `expect` namespace so they are available in every test file without having to import it at the top of every single file.
 * **Ceentered Mock Fixtures** - moved the mocks being used in `weatherService.test.ts` and `useWeather.test.ts` to `fixtures.ts` as they were repeated. Centralized mock data prevents duplication and makes tests maintainable. When the API response shape changes, update one fixture.
+---
+<br><br>
+
+# Proxy
+
+
 
 
     
