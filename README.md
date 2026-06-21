@@ -192,6 +192,14 @@ export function cn(...inputs: ClassValue[]): string {
 * **sr-only pattern** - We use `sr-only` class to hide content visually but keep it in the accessibility tree for screen readers. 
 * **Roles** - We assign `role="search"`, `role="main"` `role="alert"` to the `SearchBar`, `main` and `ErrorMessage` components respectively to provide additional context for screen readers.
 * **Busy** - We add `aria-busy={isLoading}` to the `<section>` element that will display the `WeatherCard` this is wrapped in a condition to only show this section when `isLoading` is `false` so this will assit the reader to know that the App is no longer busy after the result is displayed.
+---
+<br><br>
+
+# Testing
+
+#### Concepts
+* **JSDom** - configured `vite.config.ts` to use JSDom and created `setup.ts` to register it globally. By importing it globally once in `setup.ts`, these custom matchers are injected into the global `expect` namespace so they are available in every test file without having to import it at the top of every single file.
+* **Ceentered Mock Fixtures** - moved the mocks being used in `weatherService.test.ts` and `useWeather.test.ts` to `fixtures.ts` as they were repeated. Centralized mock data prevents duplication and makes tests maintainable. When the API response shape changes, update one fixture.
 
 
     

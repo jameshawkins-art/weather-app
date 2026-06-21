@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { isWeatherStackError, getWeatherByCity } from '../weatherService';
-import type {
-  WeatherStackResponse,
-  WeatherStackError,
-  WeatherStackAPIResponse,
-} from '../../features/weather/types';
+import type { WeatherStackAPIResponse } from '../../features/weather/types';
+import { mockSuccessResponse, mockErrorResponse } from '../../test/fixtures';
 
 vi.mock('../api', () => {
   class AppError extends Error {
@@ -31,53 +28,13 @@ vi.mock('../api', () => {
 import { fetchData } from '../api';
 const mockFetchData = vi.mocked(fetchData);
 
-const successResponse: WeatherStackResponse = {
-  request: {
-    type: 'City',
-    query: 'Cape Town, South Africa',
-    language: 'en',
-    unit: 'm',
-  },
-  location: {
-    name: 'Cape Town',
-    country: 'South Africa',
-    region: 'Cape Town, Western Cape',
-    lat: '-33.933',
-    lon: '18.417',
-    localtime: '2026-06-20 10:00',
-  },
-  current: {
-    temperature: 18,
-    weather_descriptions: ['Partly cloudy'],
-    weather_icons: ['https://assets.weatherstack.com/images/wsymbols01_sobj/day/partly_cloudy.png'],
-    wind_speed: 15,
-    wind_dir: 'SW',
-    humidity: 65,
-    feelslike: 17,
-    uv_index: 4,
-    visibility: 10,
-    pressure: 1015,
-    cloudcover: 50,
-    precip: 0,
-  },
-};
-
-const errorResponse: WeatherStackError = {
-  success: false,
-  error: {
-    code: 101,
-    type: 'invalid_access_key',
-    info: 'You have not supplied a valid API Access Key.',
-  },
-};
-
 describe('isWeatherStackError', () => {
   it('returns true for an error response', () => {
-    expect(isWeatherStackError(errorResponse)).toBe(true);
+    expect(isWeatherStackError(mockErrorResponse)).toBe(true);
   });
 
   it('returns false for a successful response', () => {
-    expect(isWeatherStackError(successResponse)).toBe(false);
+    expect(isWeatherStackError(mockSuccessResponse)).toBe(false);
   });
 
   it('returns false when "success" key is absent', () => {
@@ -92,17 +49,17 @@ describe('getWeatherByCity', () => {
   });
 
   it('returns weather data for a valid city', async () => {
-    mockFetchData.mockResolvedValueOnce(successResponse);
+    mockFetchData.mockResolvedValueOnce(mockSuccessResponse);
 
     const result = await getWeatherByCity('Cape Town');
 
-    expect(result).toEqual(successResponse);
+    expect(result).toEqual(mockSuccessResponse);
     expect(result.location.name).toBe('Cape Town');
     expect(result.current.temperature).toBe(18);
   });
 
   it('constructs the correct URL with encoded city name', async () => {
-    mockFetchData.mockResolvedValueOnce(successResponse);
+    mockFetchData.mockResolvedValueOnce(mockSuccessResponse);
 
     await getWeatherByCity('Cape Town');
 
@@ -114,7 +71,7 @@ describe('getWeatherByCity', () => {
   });
 
   it('throws a mapped user-friendly error for WeatherStack error code 101', async () => {
-    mockFetchData.mockResolvedValueOnce(errorResponse);
+    mockFetchData.mockResolvedValueOnce(mockErrorResponse);
 
     await expect(getWeatherByCity('Cape Town')).rejects.toThrow(
       'Invalid API key. Please check your configuration.',
@@ -182,7 +139,7 @@ describe('getWeatherByCity', () => {
   });
 
   it('encodes special characters in the city name', async () => {
-    mockFetchData.mockResolvedValueOnce(successResponse);
+    mockFetchData.mockResolvedValueOnce(mockSuccessResponse);
 
     await getWeatherByCity('São Paulo');
 
