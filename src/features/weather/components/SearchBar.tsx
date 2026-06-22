@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '../../../components/ui';
 
 export interface SearchBarProps {
@@ -8,6 +8,15 @@ export interface SearchBarProps {
 
 export function SearchBar({ onSearch, isLoading }: SearchBarProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const [inputKey, setInputKey] = useState(0);
+  const prevIsLoading = useRef(isLoading);
+
+  useEffect(() => {
+    if (prevIsLoading.current && !isLoading) {
+      setInputKey((prev) => prev + 1);
+    }
+    prevIsLoading.current = isLoading;
+  }, [isLoading]);
 
   const handleSubmit = (value: string) => {
     const trimmed = value.trim();
@@ -49,6 +58,7 @@ export function SearchBar({ onSearch, isLoading }: SearchBarProps) {
 
         <div className="relative w-full rounded-[10px] bg-slate-950 overflow-hidden">
           <Input
+            key={inputKey}
             id="city-search-input"
             placeholder="Search for a city..."
             onSubmit={handleSubmit}

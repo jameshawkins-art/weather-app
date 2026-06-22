@@ -69,4 +69,19 @@ describe('SearchBar component', () => {
     fireEvent.blur(input);
     expect(glowLayer?.className).toContain('opacity-0');
   });
+
+  it('resets input value when isLoading transitions from true to false', () => {
+    const { rerender } = render(<SearchBar onSearch={() => { }} isLoading={true} />);
+    const input = screen.getByLabelText('Search for a city') as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: 'Paris' } });
+    expect(input.value).toBe('Paris');
+
+    // Rerender with isLoading = false (loading finished)
+    rerender(<SearchBar onSearch={() => { }} isLoading={false} />);
+
+    // The input should be remounted and value reset to empty
+    const updatedInput = screen.getByLabelText('Search for a city') as HTMLInputElement;
+    expect(updatedInput.value).toBe('');
+  });
 });
