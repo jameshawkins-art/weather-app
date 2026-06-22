@@ -1,5 +1,15 @@
 # Weather App
 
+## Lighthouse Audit
+
+We perform automated Lighthouse audits to ensure the weather application maintains the highest standards of performance, accessibility, best practices, and SEO. Here is the latest score breakdown from PageSpeed Insights:
+
+![Lighthouse Report](lighthouse-report.webp)
+
+---
+
+## Live URL
+
 [https://weather-app-jh-2026.web.app/](https://weather-app-jh-2026.web.app/)
 
 ![Weather App Demonstration](weather-demo.webp)
@@ -56,6 +66,12 @@ Then navigate to `http://localhost:5173/` in your browser.
 * **Code State:** The code is now officially merged into `main`.
 * **Deploy Target:** Deploys to the **Live Channel** (your production URLs: `project.web.app` and `project.firebaseapp.com`).
 * **Purpose:** It publishes the finalized, approved changes to your live site for users.
+
+#### 3. `deploy-backend.yml`
+* **Trigger:** `on: push` to `main` (specifically when modifications are made to the `proxy/**` directory or the workflow file itself).
+* **Code State:** The code is officially merged into `main`.
+* **Deploy Target:** Builds and deploys the Go backend proxy binary to the **VPS Server** environment.
+* **Purpose:** It compiles the Go proxy binary, transfers configuration files, and restarts the systemd service on the VPS server to handle production weather proxy requests securely.
 ---
 
 ### Notes
@@ -113,7 +129,8 @@ Here are the key concepts and patterns used in this project:
 # Weather Feature
 
 ```
-src/features/weather/types/index.ts:
+[Weather API types](./src/features/weather/types/index.ts)
+
    interface WeatherLocation {
      name: string;
      country: string;
@@ -208,7 +225,10 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
 
 # Proxy
 
-* **Go Webserver** -  I have created a lightweight Go backend webserver located in the [proxy](./proxy) directory. Go is perfect for this simple proxy server. I have also created two scripts one for nginx setup and the other to create ssl certificates so that the Free Tier Weatherstack API can be used with HTTPS on our production Firebase URL. We also handle our incoming connections with nginx and reverse proxy to the proxy server before handing it off to Weatherstack API.
+* **Go Webserver** - I have created a lightweight Go backend webserver located in the [proxy](./proxy) directory, which acts as a secure intermediary between our front-end application and the external WeatherStack API. To showcase systems and infrastructure engineering capabilities, I configured a full deployment pipeline on a cloud VPS:
+  - **Nginx Reverse Proxy**: Automatic configuration scripts to handle incoming HTTP/HTTPS traffic and route it to our Go daemon.
+  - **SSL/TLS Termination**: Automated Let's Encrypt certificate generation scripts.
+  - **Credentials Security**: Keeps the API credentials safely stored on the server rather than exposing them to client-side browsers.
 
   For more detailed instructions, configuration variables, and VPS deployment guidelines, you can read further in the [Go Proxy README](./proxy/README.md).
 ---
@@ -217,6 +237,7 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
 # 3 Day Feature
 
 ```
+[Daily Weather API types](./src/features/weather/types/index.ts)
 export interface DailyWeatherData {
   date: string;                  // YYYY-MM-DD format
   dayName: string;               // e.g. "Monday", "Yesterday", "Tomorrow"
@@ -253,3 +274,5 @@ export interface ExtendedWeatherResponse extends WeatherStackResponse {
 * **SWR Cache Strategy** - We use the Stale-While-Revalidate (SWR) pattern to provide an instant, responsive user experience. This delivers a perceived performance improvement to the user's experience. The hook instantly renders stale cached data and triggers a background fetch to update the UI and cache silently, updating the `isStale` state to notify the UI when showing stale data.
 * **Service Worker Lifecycle** - We register a service worker via `registerSW()` in `main.tsx` and use the `autoUpdate` option. This bypasses the browser's default waiting state, allowing the new service worker to skip waiting and activate immediately to serve fresh assets without requiring the user to close all open tabs.
 * **PWA Caching Strategies** - We apply a **Cache-First** strategy for static assets (CSS, JS, images, icons) to allow instant offline rendering, and a **Network-First** strategy with a 24-hour cache expiration for dynamic weather API calls, ensuring the user gets fresh weather when online but falls back to the PWA cache when offline.
+---
+<br><br>
