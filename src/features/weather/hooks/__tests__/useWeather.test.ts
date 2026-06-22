@@ -13,6 +13,7 @@ vi.mock('../../../../services/weatherService', () => ({
 describe('useWeather hook', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   it('should initialize with default states', () => {

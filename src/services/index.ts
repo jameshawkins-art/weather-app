@@ -5,3 +5,5 @@
 
 export { fetchData } from './api';
 export { getWeatherByCity, isWeatherStackError } from './weatherService';
+export { weatherCache } from './weatherCache';
+

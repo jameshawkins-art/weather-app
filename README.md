@@ -69,7 +69,7 @@ Then navigate to `http://localhost:5173/` in your browser.
 
 The structure of the project follows a scalable, feature-based architecture. For example we may want to add google authentication then we would create a new directory `google-auth` inside the `features` directory and add the google authentication components, hooks, and types to that directory.  And also update the `src/features/index.ts` file to export the google authentication components, hooks, and types. 
 
-Another feature which would be quite nice is a calendar. Using google calendar api, to show if any meetings are on a rainy day. This would require more api keys and secrets, which will be obfuscated in our CI/CD pipeline. However we could add a simple note taking feature on the rainy days using local storage. If I have time I will try implement the note taking feature to try an achieve the bonus point for `Innovative use of browser storage or service workers for caching.`
+Another feature which would be quite nice is a calendar. Using google calendar api, to show if any meetings are on a rainy day. This would require more api keys and secrets, which will be obfuscated in our CI/CD pipeline. However we could add a simple note taking feature on the rainy days using local storage.
 
 ```
 Base structure:
@@ -220,6 +220,11 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
 * **Unidirectional Data Flow** - State originates in `useWeather` hook, flows down to `ForecastHistorySection` and `WeatherCard`, and callbacks (`onSelectDay`) flow back up to modify the state.
 * **Open-Closed Principle** - We kept the `WeatherCard` component completely closed to modifications. Instead of adding conditional logic or creating a separate component, we used an Adapter Pattern in `App.tsx` to shape selected forecast/history days into the format `WeatherCard` already expects. Likewise, we created the `ForecastHistorySection` to extend the application's features without modifying the existing detail views.
 * **Interactive Day Title (UX Enhancement)** - To improve visual clarity when shifting views, we implemented a new data point called `day_title` which dynamically updates the title above the temperature in `WeatherCard`. It defaults to "Today" for current conditions, and updates to the selected day's label (e.g., "Monday", "Yesterday") when clicking grid tiles. This is mapped via our parent adapter in `App.tsx`, preserving type-safety and following modular software design principles.
+---
+<br><br>
 
+# Browser Storage and Service Workers
 
-    
+* **Lazy State Initialization** - Passing an anonymous function to `useState` (e.g., `useState(() => getInitialValue())`) rather than an inline evaluation (`useState(getInitialValue())`). The initializer function runs exactly once on mount, whereas inline evaluation runs on every single render. Since localStorage access is synchronous and slow (blocking the main thread), lazy initialization is crucial for performance.
+* **QuotaExceededError Handling** - LocalStorage has a strict ~5MB limit. So we wrap storage operations in try/catch to prevent the app from crashing when storage is full or disabled (e.g., in incognito mode).
+* **Cache Strategy** - We opt for **Active Invalidation** instead of **Passive Invalidation** as this has less overhead on the client, as we only invalidate the cache on request rather than having a background script to invalidate the cache.
