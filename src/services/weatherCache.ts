@@ -16,7 +16,7 @@ const LAST_SEARCHED_KEY = 'weather_last_searched_city';
 
 export const weatherCache = {
 
-  get(city: string): ExtendedWeatherResponse | null {
+  getCacheInfo(city: string): { data: ExtendedWeatherResponse; isExpired: boolean } | null {
     if (!city) return null;
     const key = `${CACHE_PREFIX}${city.toLowerCase().trim()}`;
     try {
@@ -26,12 +26,7 @@ export const weatherCache = {
       const item: CachedItem = JSON.parse(itemStr);
       const isExpired = Date.now() - item.timestamp > DEFAULT_TTL;
 
-      if (isExpired) {
-        localStorage.removeItem(key);
-        return null;
-      }
-
-      return item.data;
+      return { data: item.data, isExpired };
     } catch {
       try {
         localStorage.removeItem(key);
@@ -40,6 +35,23 @@ export const weatherCache = {
       }
       return null;
     }
+  },
+
+  get(city: string): ExtendedWeatherResponse | null {
+    const info = this.getCacheInfo(city);
+    if (!info) return null;
+
+    if (info.isExpired) {
+      const key = `${CACHE_PREFIX}${city.toLowerCase().trim()}`;
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // noop
+      }
+      return null;
+    }
+
+    return info.data;
   },
 
   set(city: string, data: ExtendedWeatherResponse): void {

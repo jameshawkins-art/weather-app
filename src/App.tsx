@@ -9,6 +9,7 @@ function App() {
     error,
     lastSearchedCity,
     selectedDay,
+    isStale,
     fetchWeather,
     selectDay,
     clearError,
@@ -137,6 +138,17 @@ function App() {
                   ? `Showing weather details for ${selectedDay.dayName}, temperature ${Math.round(selectedDay.temperature)}°C, ${selectedDay.weather_descriptions?.[0] || ''}`
                   : `Showing current weather details, temperature ${Math.round(weather.current.temperature)}°C, ${weather.current.weather_descriptions?.[0] || ''}`}
               </div>
+              {isStale && (
+                <div
+                  role="status"
+                  className="w-full bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-2xl p-4 flex items-center gap-3 shadow-inner backdrop-blur-md animate-fade-in text-sm"
+                >
+                  <span className="text-lg">⚠️</span>
+                  <div>
+                    <span className="font-semibold">Showing cached data.</span> Network update failed or you are offline.
+                  </div>
+                </div>
+              )}
               <WeatherCard data={displayWeather} />
               <ForecastHistorySection
                 weather={weather}

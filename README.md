@@ -208,13 +208,35 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
 
 # Proxy
 
-* **Go Webserver** -  I have created a lightweight Go backend webserver located in the [proxy](./proxy) directory. Go is perfect for this simple proxy server. I have also created SSL certificates so that the Free Tier Weatherstack API can be used with HTTPS on our production Firebase URL. We also handle our incoming connections with nginx and reverse proxy to the proxy server before handing it off to Weatherstack API.
+* **Go Webserver** -  I have created a lightweight Go backend webserver located in the [proxy](./proxy) directory. Go is perfect for this simple proxy server. I have also created two scripts one for nginx setup and the other to create ssl certificates so that the Free Tier Weatherstack API can be used with HTTPS on our production Firebase URL. We also handle our incoming connections with nginx and reverse proxy to the proxy server before handing it off to Weatherstack API.
 
   For more detailed instructions, configuration variables, and VPS deployment guidelines, you can read further in the [Go Proxy README](./proxy/README.md).
 ---
 <br><br>
 
 # 3 Day Feature
+
+```
+export interface DailyWeatherData {
+  date: string;                  // YYYY-MM-DD format
+  dayName: string;               // e.g. "Monday", "Yesterday", "Tomorrow"
+  temperature: number;
+  weather_descriptions: string[];
+  weather_icons: string[];
+  wind_speed: number;
+  wind_dir: string;
+  humidity: number;
+  feelslike: number;
+  uv_index: number;
+  visibility: number;
+  pressure: number;
+}
+
+export interface ExtendedWeatherResponse extends WeatherStackResponse {
+  forecast: DailyWeatherData[];
+  history: DailyWeatherData[];
+}
+```
 
 * **Free Tier Issues** - The free tier for Weatherstack does not support forecast or historical data. So I have opted to mock out the forecast and historical data in the service layer. We offset the temperature by +/- 3 and the humidity by +/- 10. This is not a production-ready solution as it is not scalable and can lead to incorrect weather data being displayed. In a production environment we would use the paid tier for Weatherstack API, but the Interview Assessment specifically said use the free tier. I was also considering using a different API but did not want to stray from the assessment's guidelines.
 * **Unidirectional Data Flow** - State originates in `useWeather` hook, flows down to `ForecastHistorySection` and `WeatherCard`, and callbacks (`onSelectDay`) flow back up to modify the state.
@@ -227,4 +249,5 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
 
 * **Lazy State Initialization** - Passing an anonymous function to `useState` (e.g., `useState(() => getInitialValue())`) rather than an inline evaluation (`useState(getInitialValue())`). The initializer function runs exactly once on mount, whereas inline evaluation runs on every single render. Since localStorage access is synchronous and slow (blocking the main thread), lazy initialization is crucial for performance.
 * **QuotaExceededError Handling** - LocalStorage has a strict ~5MB limit. So we wrap storage operations in try/catch to prevent the app from crashing when storage is full or disabled (e.g., in incognito mode).
-* **Cache Strategy** - We opt for **Active Invalidation** instead of **Passive Invalidation** as this has less overhead on the client, as we only invalidate the cache on request rather than having a background script to invalidate the cache.
+* **TTL Cache Rule** - We opt for **Active Invalidation** instead of **Passive Invalidation** as this has less overhead on the client, as we only invalidate the cache on request rather than having a background script to invalidate the cache.
+* **SWR Cache Strategy** - We also include stale-while-revalidate (SWR) to provide a fast, responsive user experience. This will provide a percieved performance improvement to the **users expeirence**. We will revalidate the data in the background with `isStale` state to inform the UI when the data is stale. Stale data being that the TTL is reached.
