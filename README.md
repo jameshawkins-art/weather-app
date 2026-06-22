@@ -7,13 +7,15 @@
 ---
 <br><br>
 
-# Node Requirements
+# Development Environment
 
-I only run node locally in my projects, to maintain stricter security measures.  If you dont have node installed you may run the bash script `bash ./setup_node.sh` and this will download a portable Node.js environment with robust security verification. 
+### Node Requirements
 
-> **Note**: This script has only been tested on linux systems
+I only run Node.js locally in my projects to maintain stricter security measures. If you don't have Node.js installed, you may run the bash script `bash ./setup_node.sh`, which will download a portable Node.js environment with robust security verification. 
 
-> **Note**: Make sure to `export PATH="$PWD/bin:$PATH"` before executing any node commands in your workspaces shell.
+> **Note**: This script has only been tested on Linux systems.
+
+> **Note**: Make sure to `export PATH="$PWD/bin:$PATH"` before executing any Node.js commands in your workspace's shell.
 
 #### Required tools for script integrity and security
 "curl" "sha256sum" - `sudo apt install curl sha256sum`
@@ -22,15 +24,14 @@ I only run node locally in my projects, to maintain stricter security measures. 
 
 #### Node version
 
-You are advised to change these vairables in the script, depending on your needs:
+You are advised to change these variables in the script, depending on your needs:
 ```
 VERSION="v22.12.0"
 DISTRO="linux-x64"
 ```
----
-<br><br>
 
-# Development Environment
+---
+### Local Development
 
 To run this project locally, you will need to install dependencies.
 
@@ -68,7 +69,7 @@ Then navigate to `http://localhost:5173/` in your browser.
 
 The structure of the project follows a scalable, feature-based architecture. For example we may want to add google authentication then we would create a new directory `google-auth` inside the `features` directory and add the google authentication components, hooks, and types to that directory.  And also update the `src/features/index.ts` file to export the google authentication components, hooks, and types. 
 
-Another feature which would be quite nice is a calendar. Using google calendar api, to show if any meetings are on a rainy day. This would require more api keys and secrets, which will be obfuscated in our CI/CD pipeline. However we could add a simple note taking feature on the rainy days using local storage. If I have time I will try implement the note taking feature to try an achieve the bonus point for `Innovative use of browser storage or service workers for caching.`
+Another feature which would be quite nice is a calendar. Using google calendar api, to show if any meetings are on a rainy day. This would require more api keys and secrets, which will be obfuscated in our CI/CD pipeline. However we could add a simple note taking feature on the rainy days using local storage.
 
 ```
 Base structure:
@@ -152,8 +153,8 @@ src/features/weather/types/index.ts:
 
 * **Type guard** - `isWeatherStackError` is a type guard function that narrows the union type `WeatherStackAPIResponse` to `WeatherStackError` when `success` is `false`. This allows TypeScript to infer the correct type in conditional branches.
 * **Discriminated unions** - `WeatherStackAPIResponse` is a discriminated union of `WeatherStackResponse` and `WeatherStackError`.
-* **Seperation of concerns** - The service layer knows how to call the API, but components only know what data they need. `src/services/weatherService.ts` is an example of a service having seperation of concerns as you can easly see we can created testable service and allows for us to switch to OpenWeatherMap if we wanted to.
-* **Custom hook** - `useWeather` is a custom hook that encapsulates the logic for fetching and managing weather data. It uses `useState`, `useEffect`, and `useCallback` to manage the state of the weather data, loading state, and error state.
+* **Separation of concerns** - The service layer knows how to call the API, but components only know what data they need. [weatherService.ts](./src/services/weatherService.ts) is an example of a service having separation of concerns, as it is easily testable and allows us to switch to OpenWeatherMap if needed.
+* **Custom hook** - `useWeather` is a custom hook that encapsulates the logic for fetching and managing weather data. It uses `useState`, `useRef`, and `useCallback` to manage the state of the weather data, loading state, and error state.
 ---
 <br><br>
 
@@ -166,13 +167,13 @@ src/features/weather/types/index.ts:
     * **Input**: A controlled text input component that accepts a value prop and onChange handler, with built-in support for submission via the Enter key. It also includes client-side debouncing to limit the rate of submission events. We extend `React.InputHTMLAttributes<HTMLInputElement>` so that we can expose HTML properties like placeholder, disabled, aria-label, etc.
     * **Spinner**: A presentational component that displays a loading spinner (a spinning circle) using CSS animations, with support for a `size` prop to control its dimensions. 
     * **ErrorMessage**: A presentational component that displays an error message with an optional retry button, using a simple card layout with error-themed styling (red/orange tint, warning icon).
-* **Classname merger utility** - Using a classname merger utility allows us to combine classnames in a clean manner. Our current custom `cn` function filters out truthy classnames and joins them. In a larger production app, we would install `clsx` and `tailwind-merge` to resolve complex class overrides.
+* **Classname merger utility** - Using a classname merger utility allows us to combine class names in a clean manner. Our current custom `cn` function filters out truthy class names and joins them. In a larger production app, we would install `clsx` and `tailwind-merge` to resolve complex class overrides.
 ```typescript
 export function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ');
 }
 ```
-* **No icon library** - Im a big fan of SVG icons, In previous projects which use a Go webserver to render HTML I have built my own utility around SVG to handle customising stroke/fill colours, stroke-width, etc. I do understand the trad-offs between using libraries like react-icons and which shifts your dependancy to the library which means faster developer velocity, easier to maintain and readable.  However I am still a fan of SVG and just think they are lovely piece of tech to work with.
+* **No icon library** - I'm a big fan of SVG icons. In previous projects using a Go webserver to render HTML, I have built my own utility around SVG to handle customizing stroke/fill colors, stroke-width, etc. I understand the trade-offs of using libraries like `react-icons`, which shifts your dependency to the library for faster developer velocity and easier readability. However, I am still a fan of SVGs and think they are a lovely piece of tech to work with.
 ---
 <br><br>
 
@@ -181,8 +182,8 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
 #### Concepts
 
 * **AbortController** - We make use of `AbortController` to enforce request timeouts. The atomic component `Input.tsx` allows `onSubmit` only on keydown `Enter` which means we do not have to worry about **network race conditions**. However if we were to allow search on type we have the infrastructure to prevent a **network race condition**.
-* **Input validation at multiple layers** - Becasue our `SearchBar.tsx` handles `.trim()` and conditions around empty requests, we can then focus on the `useWeather` hook to handle the error handling for the API responses. If a developer later makes a mistake in the code where an empty value gets passed to `fetchWeather` we can rest assured that it will be handled gracefully as `getWeatherByCity` throws an error if the city name is empty. 
-* **Empty states** - Its bad UX practice to show empty states, So a Welcome UI State is displayed while waiting for the user to request weather.
+* **Input validation at multiple layers** - Because our `SearchBar.tsx` handles `.trim()` and check conditions around empty requests, we can focus on the `useWeather` hook to handle error handling for API responses. If a developer later makes a mistake in the code where an empty value is passed to `fetchWeather`, it will be handled gracefully as `getWeatherByCity` throws an error if the city name is empty.
+* **Empty states** - It's bad UX practice to show blank/empty states, so a Welcome UI State is displayed while waiting for the user to request weather.
 ---
 <br><br>
 
@@ -207,7 +208,7 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
 
 # Proxy
 
-* **Go Webserver** -  I have created a lightweight Go backend webserver located in the [proxy](./proxy) directory. Go is perfect for this simple proxy server. I have also created SSL certificates so that the Free Tier Weatherstack API can be used with HTTPS on our production Firebase URL. We also handle our incoming connections with nginx and reverse proxy to the proxy server before handing it off to Weatherstack API.
+* **Go Webserver** -  I have created a lightweight Go backend webserver located in the [proxy](./proxy) directory. Go is perfect for this simple proxy server. I have also created two scripts one for nginx setup and the other to create ssl certificates so that the Free Tier Weatherstack API can be used with HTTPS on our production Firebase URL. We also handle our incoming connections with nginx and reverse proxy to the proxy server before handing it off to Weatherstack API.
 
   For more detailed instructions, configuration variables, and VPS deployment guidelines, you can read further in the [Go Proxy README](./proxy/README.md).
 ---
@@ -215,10 +216,40 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
 
 # 3 Day Feature
 
+```
+export interface DailyWeatherData {
+  date: string;                  // YYYY-MM-DD format
+  dayName: string;               // e.g. "Monday", "Yesterday", "Tomorrow"
+  temperature: number;
+  weather_descriptions: string[];
+  weather_icons: string[];
+  wind_speed: number;
+  wind_dir: string;
+  humidity: number;
+  feelslike: number;
+  uv_index: number;
+  visibility: number;
+  pressure: number;
+}
+
+export interface ExtendedWeatherResponse extends WeatherStackResponse {
+  forecast: DailyWeatherData[];
+  history: DailyWeatherData[];
+}
+```
+
 * **Free Tier Issues** - The free tier for Weatherstack does not support forecast or historical data. So I have opted to mock out the forecast and historical data in the service layer. We offset the temperature by +/- 3 and the humidity by +/- 10. This is not a production-ready solution as it is not scalable and can lead to incorrect weather data being displayed. In a production environment we would use the paid tier for Weatherstack API, but the Interview Assessment specifically said use the free tier. I was also considering using a different API but did not want to stray from the assessment's guidelines.
 * **Unidirectional Data Flow** - State originates in `useWeather` hook, flows down to `ForecastHistorySection` and `WeatherCard`, and callbacks (`onSelectDay`) flow back up to modify the state.
 * **Open-Closed Principle** - We kept the `WeatherCard` component completely closed to modifications. Instead of adding conditional logic or creating a separate component, we used an Adapter Pattern in `App.tsx` to shape selected forecast/history days into the format `WeatherCard` already expects. Likewise, we created the `ForecastHistorySection` to extend the application's features without modifying the existing detail views.
 * **Interactive Day Title (UX Enhancement)** - To improve visual clarity when shifting views, we implemented a new data point called `day_title` which dynamically updates the title above the temperature in `WeatherCard`. It defaults to "Today" for current conditions, and updates to the selected day's label (e.g., "Monday", "Yesterday") when clicking grid tiles. This is mapped via our parent adapter in `App.tsx`, preserving type-safety and following modular software design principles.
+---
+<br><br>
 
+# Browser Storage and Service Workers
 
-    
+* **Lazy State Initialization** - Passing an anonymous function to `useState` (e.g., `useState(() => getInitialValue())`) rather than an inline evaluation (`useState(getInitialValue())`). The initializer function runs exactly once on mount, whereas inline evaluation runs on every single render. Since localStorage access is synchronous and slow (blocking the main thread), lazy initialization is crucial for performance.
+* **QuotaExceededError Handling** - LocalStorage has a strict ~5MB limit. We wrap storage operations in try/catch blocks to prevent the app from crashing when storage is full or disabled (e.g., in incognito mode).
+* **TTL Cache Rule** - We opt for **Active Invalidation** instead of **Passive Invalidation** since it has less overhead on the client. We only invalidate the cache on request, avoiding background sweep scripts.
+* **SWR Cache Strategy** - We use the Stale-While-Revalidate (SWR) pattern to provide an instant, responsive user experience. This delivers a perceived performance improvement to the user's experience. The hook instantly renders stale cached data and triggers a background fetch to update the UI and cache silently, updating the `isStale` state to notify the UI when showing stale data.
+* **Service Worker Lifecycle** - We register a service worker via `registerSW()` in `main.tsx` and use the `autoUpdate` option. This bypasses the browser's default waiting state, allowing the new service worker to skip waiting and activate immediately to serve fresh assets without requiring the user to close all open tabs.
+* **PWA Caching Strategies** - We apply a **Cache-First** strategy for static assets (CSS, JS, images, icons) to allow instant offline rendering, and a **Network-First** strategy with a 24-hour cache expiration for dynamic weather API calls, ensuring the user gets fresh weather when online but falls back to the PWA cache when offline.

@@ -13,6 +13,7 @@ vi.mock('../../../../services/weatherService', () => ({
 describe('useWeather hook', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   it('should initialize with default states', () => {
@@ -23,6 +24,12 @@ describe('useWeather hook', () => {
     expect(result.current.error).toBeNull();
     expect(result.current.lastSearchedCity).toBeNull();
     expect(result.current.selectedDay).toBeNull();
+    expect(result.current.dataSource).toBeNull();
+    expect(result.current.cachedAt).toBeNull();
+    expect(result.current.ttlRemaining).toBeNull();
+    expect(result.current.revalidationError).toBeNull();
+    expect(result.current.isOffline).toBe(false);
+    expect(result.current.isPWAActive).toBe(false);
   });
 
   it('should handle successful weather fetching', async () => {
@@ -39,6 +46,9 @@ describe('useWeather hook', () => {
     expect(result.current.error).toBeNull();
     expect(result.current.lastSearchedCity).toBe('Cape Town');
     expect(getWeatherByCity).toHaveBeenCalledWith('Cape Town');
+    expect(result.current.dataSource).toBe('network');
+    expect(result.current.cachedAt).not.toBeNull();
+    expect(result.current.revalidationError).toBeNull();
   });
 
   it('should handle API errors and set error state', async () => {
@@ -216,6 +226,212 @@ describe('useWeather hook', () => {
     });
 
     expect(result.current.selectedDay).toBeNull();
+  });
+
+  it('should hydrate weather and lastSearchedCity from cache on mount', () => {
+    const cachedItem = {
+      data: mockSuccessResponse,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem('weather_last_searched_city', 'Cape Town');
+    localStorage.setItem('weather_cache_cape town', JSON.stringify(cachedItem));
+
+    const { result } = renderHook(() => useWeather());
+
+    expect(result.current.weather).toEqual(mockSuccessResponse);
+    expect(result.current.lastSearchedCity).toBe('Cape Town');
+    expect(result.current.isStale).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.dataSource).toBe('cache');
+    expect(result.current.cachedAt).toBe(cachedItem.timestamp);
+  });
+
+  it('should return cached data immediately on cache hit without calling API', async () => {
+    const cachedItem = {
+      data: mockSuccessResponse,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem('weather_cache_cape town', JSON.stringify(cachedItem));
+
+    const { result } = renderHook(() => useWeather());
+
+    await act(async () => {
+      await result.current.fetchWeather('Cape Town');
+    });
+
+    expect(result.current.weather).toEqual(mockSuccessResponse);
+    expect(result.current.isStale).toBe(false);
+    expect(getWeatherByCity).not.toHaveBeenCalled();
+    expect(result.current.dataSource).toBe('cache');
+  });
+
+  it('should return stale data immediately, then update with fresh data on revalidation', async () => {
+    const expiredTime = Date.now() - 20 * 60 * 1000; // 20 minutes ago
+    const cachedItem = {
+      data: mockSuccessResponse,
+      timestamp: expiredTime,
+    };
+    localStorage.setItem('weather_cache_cape town', JSON.stringify(cachedItem));
+
+    const freshResponse = {
+      ...mockSuccessResponse,
+      current: {
+        ...mockSuccessResponse.current,
+        temperature: 25,
+      },
+    };
+    vi.mocked(getWeatherByCity).mockResolvedValueOnce(freshResponse);
+
+    const { result } = renderHook(() => useWeather());
+
+    let fetchPromise: Promise<void>;
+    act(() => {
+      fetchPromise = result.current.fetchWeather('Cape Town');
+    });
+
+    expect(result.current.weather).toEqual(mockSuccessResponse);
+    expect(result.current.isStale).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+
+    await act(async () => {
+      await fetchPromise;
+    });
+
+    expect(result.current.weather).toEqual(freshResponse);
+    expect(result.current.isStale).toBe(false);
+    expect(getWeatherByCity).toHaveBeenCalledWith('Cape Town');
+  });
+
+  it('should retain stale cached data if background revalidation fails', async () => {
+    const expiredTime = Date.now() - 20 * 60 * 1000;
+    const cachedItem = {
+      data: mockSuccessResponse,
+      timestamp: expiredTime,
+    };
+    localStorage.setItem('weather_cache_cape town', JSON.stringify(cachedItem));
+
+    vi.mocked(getWeatherByCity).mockRejectedValueOnce(new Error('Network error'));
+
+    const { result } = renderHook(() => useWeather());
+
+    let fetchPromise: Promise<void>;
+    act(() => {
+      fetchPromise = result.current.fetchWeather('Cape Town');
+    });
+
+    await act(async () => {
+      await fetchPromise;
+    });
+
+    expect(result.current.weather).toEqual(mockSuccessResponse);
+    expect(result.current.isStale).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+    expect(result.current.revalidationError).toBe('Network error');
+    expect(result.current.dataSource).toBe('cache');
+  });
+
+  it('should ignore revalidation response from a previous search if query changes', async () => {
+    const expiredTime = Date.now() - 20 * 60 * 1000;
+    const cachedParis = {
+      data: {
+        ...mockSuccessResponse,
+        location: { ...mockSuccessResponse.location, name: 'Paris' },
+      },
+      timestamp: expiredTime,
+    };
+    localStorage.setItem('weather_cache_paris', JSON.stringify(cachedParis));
+
+    let resolveParis: (value: any) => void = () => {};
+    const parisPromise = new Promise<any>((resolve) => {
+      resolveParis = resolve;
+    });
+
+    const berlinResponse = {
+      ...mockSuccessResponse,
+      location: { ...mockSuccessResponse.location, name: 'Berlin' },
+    };
+
+    vi.mocked(getWeatherByCity)
+      .mockReturnValueOnce(parisPromise)
+      .mockResolvedValueOnce(berlinResponse);
+
+    const { result } = renderHook(() => useWeather());
+
+    let firstSearch: Promise<void>;
+    let secondSearch: Promise<void>;
+
+    act(() => {
+      firstSearch = result.current.fetchWeather('Paris');
+    });
+    expect(result.current.weather?.location.name).toBe('Paris');
+
+    act(() => {
+      secondSearch = result.current.fetchWeather('Berlin');
+    });
+    await act(async () => {
+      await secondSearch;
+    });
+    expect(result.current.weather?.location.name).toBe('Berlin');
+
+    await act(async () => {
+      resolveParis({
+        ...mockSuccessResponse,
+        location: { ...mockSuccessResponse.location, name: 'Paris' },
+        current: { ...mockSuccessResponse.current, temperature: 30 },
+      });
+      await firstSearch;
+    });
+
+    expect(result.current.weather?.location.name).toBe('Berlin');
+  });
+
+  it('should set dataSource to pwa-cache if fetch resolves successfully while offline', async () => {
+    vi.mocked(getWeatherByCity).mockResolvedValueOnce(mockSuccessResponse);
+
+    const originalOnLine = navigator.onLine;
+    Object.defineProperty(navigator, 'onLine', {
+      value: false,
+      configurable: true,
+    });
+
+    const { result } = renderHook(() => useWeather());
+
+    await act(async () => {
+      await result.current.fetchWeather('Cape Town');
+    });
+
+    expect(result.current.weather).toEqual(mockSuccessResponse);
+    expect(result.current.dataSource).toBe('pwa-cache');
+
+    Object.defineProperty(navigator, 'onLine', {
+      value: originalOnLine,
+      configurable: true,
+    });
+  });
+
+  it('should update ttlRemaining periodically using the timer', async () => {
+    vi.useFakeTimers();
+    const timestamp = Date.now();
+    const cachedItem = {
+      data: mockSuccessResponse,
+      timestamp,
+    };
+    localStorage.setItem('weather_last_searched_city', 'Cape Town');
+    localStorage.setItem('weather_cache_cape town', JSON.stringify(cachedItem));
+
+    const { result } = renderHook(() => useWeather());
+
+    expect(result.current.cachedAt).toBe(timestamp);
+    
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    const expectedTtl = 15 * 60 * 1000 - 5000;
+    expect(result.current.ttlRemaining).toBe(expectedTtl);
+
+    vi.useRealTimers();
   });
 });
 
