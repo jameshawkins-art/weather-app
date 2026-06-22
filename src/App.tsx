@@ -1,5 +1,5 @@
 import { useWeather } from './features/weather';
-import { SearchBar, WeatherCard, ForecastHistorySection } from './features/weather/components';
+import { SearchBar, WeatherCard, ForecastHistorySection, DataDiagnostics } from './features/weather/components';
 import { Spinner, ErrorMessage } from './components/ui';
 
 function App() {
@@ -13,6 +13,12 @@ function App() {
     fetchWeather,
     selectDay,
     clearError,
+    dataSource,
+    cachedAt,
+    ttlRemaining,
+    revalidationError,
+    isOffline,
+    isPWAActive,
   } = useWeather();
 
   const displayWeather = weather
@@ -149,6 +155,14 @@ function App() {
                   </div>
                 </div>
               )}
+              <DataDiagnostics
+                dataSource={dataSource}
+                cachedAt={cachedAt}
+                ttlRemaining={ttlRemaining}
+                revalidationError={revalidationError}
+                isOffline={isOffline}
+                isPWAActive={isPWAActive}
+              />
               <WeatherCard data={displayWeather} />
               <ForecastHistorySection
                 weather={weather}

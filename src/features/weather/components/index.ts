@@ -9,3 +9,4 @@ export * from './WeatherCard';
 export * from './WeatherDetails';
 export * from './WeatherTile';
 export * from './ForecastHistorySection';
+export * from './DataDiagnostics';

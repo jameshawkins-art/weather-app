@@ -24,6 +24,12 @@ describe('useWeather hook', () => {
     expect(result.current.error).toBeNull();
     expect(result.current.lastSearchedCity).toBeNull();
     expect(result.current.selectedDay).toBeNull();
+    expect(result.current.dataSource).toBeNull();
+    expect(result.current.cachedAt).toBeNull();
+    expect(result.current.ttlRemaining).toBeNull();
+    expect(result.current.revalidationError).toBeNull();
+    expect(result.current.isOffline).toBe(false);
+    expect(result.current.isPWAActive).toBe(false);
   });
 
   it('should handle successful weather fetching', async () => {
@@ -40,6 +46,9 @@ describe('useWeather hook', () => {
     expect(result.current.error).toBeNull();
     expect(result.current.lastSearchedCity).toBe('Cape Town');
     expect(getWeatherByCity).toHaveBeenCalledWith('Cape Town');
+    expect(result.current.dataSource).toBe('network');
+    expect(result.current.cachedAt).not.toBeNull();
+    expect(result.current.revalidationError).toBeNull();
   });
 
   it('should handle API errors and set error state', async () => {
@@ -233,6 +242,8 @@ describe('useWeather hook', () => {
     expect(result.current.lastSearchedCity).toBe('Cape Town');
     expect(result.current.isStale).toBe(false);
     expect(result.current.isLoading).toBe(false);
+    expect(result.current.dataSource).toBe('cache');
+    expect(result.current.cachedAt).toBe(cachedItem.timestamp);
   });
 
   it('should return cached data immediately on cache hit without calling API', async () => {
@@ -251,6 +262,7 @@ describe('useWeather hook', () => {
     expect(result.current.weather).toEqual(mockSuccessResponse);
     expect(result.current.isStale).toBe(false);
     expect(getWeatherByCity).not.toHaveBeenCalled();
+    expect(result.current.dataSource).toBe('cache');
   });
 
   it('should return stale data immediately, then update with fresh data on revalidation', async () => {
@@ -315,6 +327,8 @@ describe('useWeather hook', () => {
     expect(result.current.isStale).toBe(true);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBeNull();
+    expect(result.current.revalidationError).toBe('Network error');
+    expect(result.current.dataSource).toBe('cache');
   });
 
   it('should ignore revalidation response from a previous search if query changes', async () => {
@@ -370,6 +384,54 @@ describe('useWeather hook', () => {
     });
 
     expect(result.current.weather?.location.name).toBe('Berlin');
+  });
+
+  it('should set dataSource to pwa-cache if fetch resolves successfully while offline', async () => {
+    vi.mocked(getWeatherByCity).mockResolvedValueOnce(mockSuccessResponse);
+
+    const originalOnLine = navigator.onLine;
+    Object.defineProperty(navigator, 'onLine', {
+      value: false,
+      configurable: true,
+    });
+
+    const { result } = renderHook(() => useWeather());
+
+    await act(async () => {
+      await result.current.fetchWeather('Cape Town');
+    });
+
+    expect(result.current.weather).toEqual(mockSuccessResponse);
+    expect(result.current.dataSource).toBe('pwa-cache');
+
+    Object.defineProperty(navigator, 'onLine', {
+      value: originalOnLine,
+      configurable: true,
+    });
+  });
+
+  it('should update ttlRemaining periodically using the timer', async () => {
+    vi.useFakeTimers();
+    const timestamp = Date.now();
+    const cachedItem = {
+      data: mockSuccessResponse,
+      timestamp,
+    };
+    localStorage.setItem('weather_last_searched_city', 'Cape Town');
+    localStorage.setItem('weather_cache_cape town', JSON.stringify(cachedItem));
+
+    const { result } = renderHook(() => useWeather());
+
+    expect(result.current.cachedAt).toBe(timestamp);
+    
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    const expectedTtl = 15 * 60 * 1000 - 5000;
+    expect(result.current.ttlRemaining).toBe(expectedTtl);
+
+    vi.useRealTimers();
   });
 });
 
