@@ -218,5 +218,158 @@ describe('useWeather hook', () => {
 
     expect(result.current.selectedDay).toBeNull();
   });
+
+  it('should hydrate weather and lastSearchedCity from cache on mount', () => {
+    const cachedItem = {
+      data: mockSuccessResponse,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem('weather_last_searched_city', 'Cape Town');
+    localStorage.setItem('weather_cache_cape town', JSON.stringify(cachedItem));
+
+    const { result } = renderHook(() => useWeather());
+
+    expect(result.current.weather).toEqual(mockSuccessResponse);
+    expect(result.current.lastSearchedCity).toBe('Cape Town');
+    expect(result.current.isStale).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('should return cached data immediately on cache hit without calling API', async () => {
+    const cachedItem = {
+      data: mockSuccessResponse,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem('weather_cache_cape town', JSON.stringify(cachedItem));
+
+    const { result } = renderHook(() => useWeather());
+
+    await act(async () => {
+      await result.current.fetchWeather('Cape Town');
+    });
+
+    expect(result.current.weather).toEqual(mockSuccessResponse);
+    expect(result.current.isStale).toBe(false);
+    expect(getWeatherByCity).not.toHaveBeenCalled();
+  });
+
+  it('should return stale data immediately, then update with fresh data on revalidation', async () => {
+    const expiredTime = Date.now() - 20 * 60 * 1000; // 20 minutes ago
+    const cachedItem = {
+      data: mockSuccessResponse,
+      timestamp: expiredTime,
+    };
+    localStorage.setItem('weather_cache_cape town', JSON.stringify(cachedItem));
+
+    const freshResponse = {
+      ...mockSuccessResponse,
+      current: {
+        ...mockSuccessResponse.current,
+        temperature: 25,
+      },
+    };
+    vi.mocked(getWeatherByCity).mockResolvedValueOnce(freshResponse);
+
+    const { result } = renderHook(() => useWeather());
+
+    let fetchPromise: Promise<void>;
+    act(() => {
+      fetchPromise = result.current.fetchWeather('Cape Town');
+    });
+
+    expect(result.current.weather).toEqual(mockSuccessResponse);
+    expect(result.current.isStale).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+
+    await act(async () => {
+      await fetchPromise;
+    });
+
+    expect(result.current.weather).toEqual(freshResponse);
+    expect(result.current.isStale).toBe(false);
+    expect(getWeatherByCity).toHaveBeenCalledWith('Cape Town');
+  });
+
+  it('should retain stale cached data if background revalidation fails', async () => {
+    const expiredTime = Date.now() - 20 * 60 * 1000;
+    const cachedItem = {
+      data: mockSuccessResponse,
+      timestamp: expiredTime,
+    };
+    localStorage.setItem('weather_cache_cape town', JSON.stringify(cachedItem));
+
+    vi.mocked(getWeatherByCity).mockRejectedValueOnce(new Error('Network error'));
+
+    const { result } = renderHook(() => useWeather());
+
+    let fetchPromise: Promise<void>;
+    act(() => {
+      fetchPromise = result.current.fetchWeather('Cape Town');
+    });
+
+    await act(async () => {
+      await fetchPromise;
+    });
+
+    expect(result.current.weather).toEqual(mockSuccessResponse);
+    expect(result.current.isStale).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('should ignore revalidation response from a previous search if query changes', async () => {
+    const expiredTime = Date.now() - 20 * 60 * 1000;
+    const cachedParis = {
+      data: {
+        ...mockSuccessResponse,
+        location: { ...mockSuccessResponse.location, name: 'Paris' },
+      },
+      timestamp: expiredTime,
+    };
+    localStorage.setItem('weather_cache_paris', JSON.stringify(cachedParis));
+
+    let resolveParis: (value: any) => void = () => {};
+    const parisPromise = new Promise<any>((resolve) => {
+      resolveParis = resolve;
+    });
+
+    const berlinResponse = {
+      ...mockSuccessResponse,
+      location: { ...mockSuccessResponse.location, name: 'Berlin' },
+    };
+
+    vi.mocked(getWeatherByCity)
+      .mockReturnValueOnce(parisPromise)
+      .mockResolvedValueOnce(berlinResponse);
+
+    const { result } = renderHook(() => useWeather());
+
+    let firstSearch: Promise<void>;
+    let secondSearch: Promise<void>;
+
+    act(() => {
+      firstSearch = result.current.fetchWeather('Paris');
+    });
+    expect(result.current.weather?.location.name).toBe('Paris');
+
+    act(() => {
+      secondSearch = result.current.fetchWeather('Berlin');
+    });
+    await act(async () => {
+      await secondSearch;
+    });
+    expect(result.current.weather?.location.name).toBe('Berlin');
+
+    await act(async () => {
+      resolveParis({
+        ...mockSuccessResponse,
+        location: { ...mockSuccessResponse.location, name: 'Paris' },
+        current: { ...mockSuccessResponse.current, temperature: 30 },
+      });
+      await firstSearch;
+    });
+
+    expect(result.current.weather?.location.name).toBe('Berlin');
+  });
 });
 

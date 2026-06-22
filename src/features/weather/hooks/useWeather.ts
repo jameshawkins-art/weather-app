@@ -63,6 +63,11 @@ export function useWeather(): UseWeatherReturn {
       weatherCache.setLastSearchedCity(city);
       setIsStale(cacheInfo.isExpired);
       setIsLoading(false);
+
+      if (!cacheInfo.isExpired) {
+        activeRequestRef.current = null;
+        return;
+      }
     } else {
       setIsLoading(true);
       setIsStale(false);
