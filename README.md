@@ -2,7 +2,7 @@
 
 [https://weather-app-jh-2026.web.app/](https://weather-app-jh-2026.web.app/)
 
-![Weather App Demonstration](weather_demo.webp)
+![Weather App Demonstration](weather-demo.webp)
 
 ---
 <br><br>
