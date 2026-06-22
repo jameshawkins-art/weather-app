@@ -11,11 +11,11 @@
 
 ### Node Requirements
 
-I only run node locally in my projects, to maintain stricter security measures.  If you dont have node installed you may run the bash script `bash ./setup_node.sh` and this will download a portable Node.js environment with robust security verification. 
+I only run Node.js locally in my projects to maintain stricter security measures. If you don't have Node.js installed, you may run the bash script `bash ./setup_node.sh`, which will download a portable Node.js environment with robust security verification. 
 
-> **Note**: This script has only been tested on linux systems
+> **Note**: This script has only been tested on Linux systems.
 
-> **Note**: Make sure to `export PATH="$PWD/bin:$PATH"` before executing any node commands in your workspaces shell.
+> **Note**: Make sure to `export PATH="$PWD/bin:$PATH"` before executing any Node.js commands in your workspace's shell.
 
 #### Required tools for script integrity and security
 "curl" "sha256sum" - `sudo apt install curl sha256sum`
@@ -24,7 +24,7 @@ I only run node locally in my projects, to maintain stricter security measures. 
 
 #### Node version
 
-You are advised to change these vairables in the script, depending on your needs:
+You are advised to change these variables in the script, depending on your needs:
 ```
 VERSION="v22.12.0"
 DISTRO="linux-x64"
@@ -153,8 +153,8 @@ src/features/weather/types/index.ts:
 
 * **Type guard** - `isWeatherStackError` is a type guard function that narrows the union type `WeatherStackAPIResponse` to `WeatherStackError` when `success` is `false`. This allows TypeScript to infer the correct type in conditional branches.
 * **Discriminated unions** - `WeatherStackAPIResponse` is a discriminated union of `WeatherStackResponse` and `WeatherStackError`.
-* **Seperation of concerns** - The service layer knows how to call the API, but components only know what data they need. `src/services/weatherService.ts` is an example of a service having seperation of concerns as you can easly see we can created testable service and allows for us to switch to OpenWeatherMap if we wanted to.
-* **Custom hook** - `useWeather` is a custom hook that encapsulates the logic for fetching and managing weather data. It uses `useState`, `useEffect`, and `useCallback` to manage the state of the weather data, loading state, and error state.
+* **Separation of concerns** - The service layer knows how to call the API, but components only know what data they need. [weatherService.ts](./src/services/weatherService.ts) is an example of a service having separation of concerns, as it is easily testable and allows us to switch to OpenWeatherMap if needed.
+* **Custom hook** - `useWeather` is a custom hook that encapsulates the logic for fetching and managing weather data. It uses `useState`, `useRef`, and `useCallback` to manage the state of the weather data, loading state, and error state.
 ---
 <br><br>
 
@@ -167,13 +167,13 @@ src/features/weather/types/index.ts:
     * **Input**: A controlled text input component that accepts a value prop and onChange handler, with built-in support for submission via the Enter key. It also includes client-side debouncing to limit the rate of submission events. We extend `React.InputHTMLAttributes<HTMLInputElement>` so that we can expose HTML properties like placeholder, disabled, aria-label, etc.
     * **Spinner**: A presentational component that displays a loading spinner (a spinning circle) using CSS animations, with support for a `size` prop to control its dimensions. 
     * **ErrorMessage**: A presentational component that displays an error message with an optional retry button, using a simple card layout with error-themed styling (red/orange tint, warning icon).
-* **Classname merger utility** - Using a classname merger utility allows us to combine classnames in a clean manner. Our current custom `cn` function filters out truthy classnames and joins them. In a larger production app, we would install `clsx` and `tailwind-merge` to resolve complex class overrides.
+* **Classname merger utility** - Using a classname merger utility allows us to combine class names in a clean manner. Our current custom `cn` function filters out truthy class names and joins them. In a larger production app, we would install `clsx` and `tailwind-merge` to resolve complex class overrides.
 ```typescript
 export function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ');
 }
 ```
-* **No icon library** - Im a big fan of SVG icons, In previous projects which use a Go webserver to render HTML I have built my own utility around SVG to handle customising stroke/fill colours, stroke-width, etc. I do understand the trad-offs between using libraries like react-icons and which shifts your dependancy to the library which means faster developer velocity, easier to maintain and readable.  However I am still a fan of SVG and just think they are lovely piece of tech to work with.
+* **No icon library** - I'm a big fan of SVG icons. In previous projects using a Go webserver to render HTML, I have built my own utility around SVG to handle customizing stroke/fill colors, stroke-width, etc. I understand the trade-offs of using libraries like `react-icons`, which shifts your dependency to the library for faster developer velocity and easier readability. However, I am still a fan of SVGs and think they are a lovely piece of tech to work with.
 ---
 <br><br>
 
@@ -182,8 +182,8 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
 #### Concepts
 
 * **AbortController** - We make use of `AbortController` to enforce request timeouts. The atomic component `Input.tsx` allows `onSubmit` only on keydown `Enter` which means we do not have to worry about **network race conditions**. However if we were to allow search on type we have the infrastructure to prevent a **network race condition**.
-* **Input validation at multiple layers** - Becasue our `SearchBar.tsx` handles `.trim()` and conditions around empty requests, we can then focus on the `useWeather` hook to handle the error handling for the API responses. If a developer later makes a mistake in the code where an empty value gets passed to `fetchWeather` we can rest assured that it will be handled gracefully as `getWeatherByCity` throws an error if the city name is empty. 
-* **Empty states** - Its bad UX practice to show empty states, So a Welcome UI State is displayed while waiting for the user to request weather.
+* **Input validation at multiple layers** - Because our `SearchBar.tsx` handles `.trim()` and check conditions around empty requests, we can focus on the `useWeather` hook to handle error handling for API responses. If a developer later makes a mistake in the code where an empty value is passed to `fetchWeather`, it will be handled gracefully as `getWeatherByCity` throws an error if the city name is empty.
+* **Empty states** - It's bad UX practice to show blank/empty states, so a Welcome UI State is displayed while waiting for the user to request weather.
 ---
 <br><br>
 
@@ -248,6 +248,8 @@ export interface ExtendedWeatherResponse extends WeatherStackResponse {
 # Browser Storage and Service Workers
 
 * **Lazy State Initialization** - Passing an anonymous function to `useState` (e.g., `useState(() => getInitialValue())`) rather than an inline evaluation (`useState(getInitialValue())`). The initializer function runs exactly once on mount, whereas inline evaluation runs on every single render. Since localStorage access is synchronous and slow (blocking the main thread), lazy initialization is crucial for performance.
-* **QuotaExceededError Handling** - LocalStorage has a strict ~5MB limit. So we wrap storage operations in try/catch to prevent the app from crashing when storage is full or disabled (e.g., in incognito mode).
-* **TTL Cache Rule** - We opt for **Active Invalidation** instead of **Passive Invalidation** as this has less overhead on the client, as we only invalidate the cache on request rather than having a background script to invalidate the cache.
-* **SWR Cache Strategy** - We also include stale-while-revalidate (SWR) to provide a fast, responsive user experience. This will provide a percieved performance improvement to the **users expeirence**. We will revalidate the data in the background with `isStale` state to inform the UI when the data is stale. Stale data being that the TTL is reached.
+* **QuotaExceededError Handling** - LocalStorage has a strict ~5MB limit. We wrap storage operations in try/catch blocks to prevent the app from crashing when storage is full or disabled (e.g., in incognito mode).
+* **TTL Cache Rule** - We opt for **Active Invalidation** instead of **Passive Invalidation** since it has less overhead on the client. We only invalidate the cache on request, avoiding background sweep scripts.
+* **SWR Cache Strategy** - We use the Stale-While-Revalidate (SWR) pattern to provide an instant, responsive user experience. This delivers a perceived performance improvement to the user's experience. The hook instantly renders stale cached data and triggers a background fetch to update the UI and cache silently, updating the `isStale` state to notify the UI when showing stale data.
+* **Service Worker Lifecycle** - We register a service worker via `registerSW()` in `main.tsx` and use the `autoUpdate` option. This bypasses the browser's default waiting state, allowing the new service worker to skip waiting and activate immediately to serve fresh assets without requiring the user to close all open tabs.
+* **PWA Caching Strategies** - We apply a **Cache-First** strategy for static assets (CSS, JS, images, icons) to allow instant offline rendering, and a **Network-First** strategy with a 24-hour cache expiration for dynamic weather API calls, ensuring the user gets fresh weather when online but falls back to the PWA cache when offline.
